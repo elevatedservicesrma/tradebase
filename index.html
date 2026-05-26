@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TradeBase — Beginner Trading Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="auth-gate" style="position:fixed;inset:0;z-index:99999;background:#0b0e14;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;">
+  <div style="text-align:center;max-width:380px;padding:40px;background:#131720;border:1px solid #2a3040;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);">
+    <div style="font-size:32px;margin-bottom:8px;"><i data-lucide="bar-chart-3" class="icon icon-xl"></i></div>
+    <h1 style="color:#e1e7ef;font-size:22px;margin-bottom:4px;">TradeBase</h1>
+    <p style="color:#7a8599;font-size:13px;margin-bottom:24px;">Enter password to continue</p>
+    <input id="auth-input" type="password" placeholder="Password" autocomplete="off"
+      style="width:100%;padding:12px 16px;background:#0b0e14;border:1px solid #2a3040;border-radius:8px;color:#e1e7ef;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;transition:border-color .2s;"
+      onfocus="this.style.borderColor='#2962ff'" onblur="this.style.borderColor='#2a3040'"/>
+    <p id="auth-error" style="color:#ef5350;font-size:12px;margin-bottom:12px;display:none;">Incorrect password</p>
+    <button id="auth-btn"
+      style="width:100%;padding:12px;background:#2962ff;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;"
+      onmouseover="this.style.background='#5b8def'" onmouseout="this.style.background='#2962ff'">
+      Unlock
+    </button>
+    <p style="color:#545e72;font-size:11px;margin-top:16px;">Authorized access only</p>
+  </div>
+</div>
+<script>
+(function(){
+  var h='977723be4ef8dee6e86cbabb3049a5e7f9e8cf6464f1e47e03220ed96a58713b';
+  function sha256(m){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(m)).then(function(b){return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')})}
+  function check(){
+    var v=document.getElementById('auth-input').value;
+    sha256(v).then(function(d){
+      if(d===h){
+        sessionStorage.setItem('tb_auth','1');
+        document.getElementById('auth-gate').style.display='none';
+      } else {
+        document.getElementById('auth-error').style.display='block';
+        document.getElementById('auth-input').style.borderColor='#ef5350';
+      }
+    });
+  }
+  if(sessionStorage.getItem('tb_auth')==='1'){document.getElementById('auth-gate').style.display='none';}
+  document.getElementById('auth-btn').addEventListener('click',check);
+  document.getElementById('auth-input').addEventListener('keydown',function(e){if(e.key==='Enter')check();});
+})();
+</script>
+
+<!-- TICKER TAPE -->
+<div id="ticker-tape">
+  <div class="tradingview-widget-container">
+    <div class="tradingview-widget-container__widget"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+    {"symbols":[{"proName":"FOREXCOM:SPXUSD","title":"S&P 500"},{"proName":"FOREXCOM:NSXUSD","title":"Nasdaq"},{"proName":"FOREXCOM:DJI","title":"Dow Jones"},{"proName":"NYSE:SPY","title":"SPY"},{"proName":"NASDAQ:QQQ","title":"QQQ"},{"proName":"NASDAQ:AAPL","title":"AAPL"},{"proName":"NASDAQ:MSFT","title":"MSFT"},{"proName":"NASDAQ:NVDA","title":"NVDA"},{"proName":"NASDAQ:TSLA","title":"TSLA"},{"proName":"BINANCE:BTCUSDT","title":"BTC"},{"proName":"BINANCE:ETHUSDT","title":"ETH"},{"proName":"FX:EURUSD","title":"EUR/USD"},{"proName":"FX:USDJPY","title":"USD/JPY"},{"proName":"COMEX:GC1!","title":"Gold"},{"proName":"NYMEX:CL1!","title":"Oil"}],"showSymbolLogo":false,"isTransparent":true,"displayMode":"adaptive","colorTheme":"dark","locale":"en"}
+    </script>
+  </div>
+</div>
+
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><i data-lucide="trending-up" class="icon" style="color:#fff;"></i></div>
+    <div class="logo-text">TradeBase<small>Learning Terminal</small></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Overview</div>
+    <div class="nav-item" data-section="dashboard" onclick="showSection('dashboard')">
+      <span class="nav-icon"><i data-lucide="layout-dashboard" class="icon"></i></span>Dashboard
+    </div>
+    <div class="nav-item" data-section="markets" onclick="showSection('markets')">
+      <span class="nav-icon"><i data-lucide="candlestick-chart" class="icon"></i></span>Live Markets
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Learn</div>
+    <div class="nav-item" data-section="education" onclick="showSection('education')">
+      <span class="nav-icon"><i data-lucide="graduation-cap" class="icon"></i></span>Education Center<span class="nav-badge">8</span>
+    </div>
+    <div class="nav-item" data-section="research" onclick="showSection('research')">
+      <span class="nav-icon"><i data-lucide="search" class="icon"></i></span>Research Tools
+    </div>
+    <div class="nav-item" data-section="glossary" onclick="showSection('glossary')">
+      <span class="nav-icon"><i data-lucide="book-open" class="icon"></i></span>Glossary<span class="nav-badge">60+</span>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">SIMULATE</div>
+    <div class="nav-item" data-section="paper" onclick="showSection('paper')">
+      <span class="nav-icon"><i data-lucide="line-chart" class="icon"></i></span>Paper Trading<span class="nav-badge" style="background:var(--green-dim);color:var(--green);">NEW</span>
+    </div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="market-status">
+      <div class="status-dot" id="status-dot"></div>
+      <div class="status-text">
+        <strong id="status-text">Checking...</strong>
+        <span id="status-sub">NYSE · NASDAQ</span>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="page-header">
+    <button class="hamburger" onclick="toggleSidebar()"><i data-lucide="menu" class="icon"></i></button>
+    <div class="page-title" id="page-title">Dashboard <small id="page-subtitle">Market overview &amp; quick stats</small></div>
+    <div class="header-search">
+      <span class="search-icon"><i data-lucide="search" class="icon icon-sm"></i></span>
+      <input type="text" placeholder="Search terms, assets, topics…" id="global-search"/>
+    </div>
+  </div>
+
+  <div class="content-area">
+
+    <!-- ═══════════════════════════════════════
+         DASHBOARD
+    ═══════════════════════════════════════ -->
+    <div id="section-dashboard" class="section active">
+      <div class="disclaimer">
+        <span class="disclaimer-icon"><i data-lucide="alert-triangle" class="icon"></i></span>
+        <span><strong>Educational Disclaimer:</strong> TradeBase is for educational purposes only and does not constitute financial advice. All prices shown are indicative. Never invest money you cannot afford to lose. Past performance is not indicative of future results. Consult a licensed financial advisor before making investment decisions.</span>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-main">
+          <!-- stat row -->
+          <div class="grid grid-4">
+            <div class="stat-card">
+              <div class="stat-label">S&P 500</div>
+              <div class="stat-value up">5,487</div>
+              <div class="stat-sub up">▲ +0.59% today</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">NASDAQ-100</div>
+              <div class="stat-value up">19,240</div>
+              <div class="stat-sub up">▲ +1.05% today</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">VIX (Fear Index)</div>
+              <div class="stat-value neutral">18.2</div>
+              <div class="stat-sub neutral">● Low volatility</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">10Y Treasury</div>
+              <div class="stat-value">4.42%</div>
+              <div class="stat-sub down">▼ -0.03 bps</div>
+            </div>
+          </div>
+
+          <!-- TradingView market overview -->
+          <div class="card card-flush">
+            <div class="tradingview-widget-container" style="height:460px">
+              <div class="tradingview-widget-container__widget" style="height:460px"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+              {"colorTheme":"dark","dateRange":"12M","showChart":true,"locale":"en","largeChartUrl":"","isTransparent":true,"showSymbolLogo":true,"showFloatingTooltip":false,"width":"100%","height":"460","plotLineColorGrowing":"rgba(41,98,255,1)","plotLineColorFalling":"rgba(41,98,255,1)","gridLineColor":"rgba(42,46,57,0)","scaleFontColor":"rgba(134,137,147,1)","belowLineFillColorGrowing":"rgba(41,98,255,0.12)","belowLineFillColorFalling":"rgba(41,98,255,0.02)","symbolActiveColor":"rgba(41,98,255,0.12)","tabs":[{"title":"Indices","symbols":[{"s":"FOREXCOM:SPXUSD","d":"S&P 500"},{"s":"FOREXCOM:NSXUSD","d":"Nasdaq 100"},{"s":"FOREXCOM:DJI","d":"Dow Jones"},{"s":"INDEX:DEU40","d":"DAX"},{"s":"INDEX:NKY","d":"Nikkei 225"}],"originalTitle":"Indices"},{"title":"Stocks","symbols":[{"s":"NASDAQ:AAPL","d":"Apple"},{"s":"NASDAQ:MSFT","d":"Microsoft"},{"s":"NASDAQ:NVDA","d":"NVIDIA"},{"s":"NASDAQ:TSLA","d":"Tesla"},{"s":"NASDAQ:AMZN","d":"Amazon"},{"s":"NASDAQ:META","d":"Meta"}]},{"title":"Crypto","symbols":[{"s":"BINANCE:BTCUSDT","d":"Bitcoin"},{"s":"BINANCE:ETHUSDT","d":"Ethereum"},{"s":"BINANCE:SOLUSDT","d":"Solana"},{"s":"BINANCE:BNBUSDT","d":"BNB"}]},{"title":"Forex","symbols":[{"s":"FX:EURUSD","d":"EUR/USD"},{"s":"FX:GBPUSD","d":"GBP/USD"},{"s":"FX:USDJPY","d":"USD/JPY"},{"s":"FX:AUDUSD","d":"AUD/USD"}]},{"title":"Commodities","symbols":[{"s":"COMEX:GC1!","d":"Gold"},{"s":"COMEX:SI1!","d":"Silver"},{"s":"NYMEX:CL1!","d":"Crude Oil"},{"s":"NYMEX:NG1!","d":"Natural Gas"}]}]}
+              </script>
+            </div>
+          </div>
+
+          <!-- quick start cards -->
+          <div class="section-intro qs-intro">
+            <div class="eyebrow">Quick Start</div>
+            <h2>New to trading? Start here.</h2>
+          </div>
+          <div class="grid grid-3">
+            <div class="card quick-start-card" onclick="showSection('education')">
+              <div class="quick-start-icon"><i data-lucide="graduation-cap" class="icon icon-lg"></i></div>
+              <h3 class="quick-start-title">Education Center</h3>
+              <p class="quick-start-desc">8 full modules covering every concept from market basics to advanced risk management.</p>
+              <div class="quick-start-link">Start Learning →</div>
+            </div>
+            <div class="card quick-start-card" onclick="showSection('markets')">
+              <div class="quick-start-icon"><i data-lucide="bar-chart-3" class="icon icon-lg"></i></div>
+              <h3 class="quick-start-title">Live Markets</h3>
+              <p class="quick-start-desc">Real-time prices for stocks, ETFs, commodities, forex pairs, and crypto via TradingView.</p>
+              <div class="quick-start-link">View Markets →</div>
+            </div>
+            <div class="card quick-start-card" onclick="showSection('research')">
+              <div class="quick-start-icon"><i data-lucide="telescope" class="icon icon-lg"></i></div>
+              <h3 class="quick-start-title">Research Tools</h3>
+              <p class="quick-start-desc">Learn how to research trades, read economic data, and build a watchlist the right way.</p>
+              <div class="quick-start-link">Start Research →</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WATCHLIST SIDEBAR -->
+        <div class="dash-side">
+          <div class="card card-flush">
+            <div class="sidebar-card-header">
+              <div class="card-title no-margin"><i data-lucide="list" class="icon icon-sm"></i> Watchlist</div>
+              <span class="card-badge">Demo prices</span>
+            </div>
+            <div id="watchlist" class="wl-container"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><i data-lucide="lightbulb" class="icon icon-sm"></i> Daily Concept</div>
+            <p class="concept-text"><strong class="concept-highlight">Risk/Reward Ratio</strong> — Before entering any trade, calculate how much you risk vs. how much you aim to gain.</p>
+            <p class="concept-sub">A 1:3 R:R means risking $100 to potentially make $300. Most professionals only take trades with at least a 1:2 ratio.</p>
+            <div class="concept-rule">
+              <i data-lucide="check-circle" class="icon icon-sm" style="display:inline;vertical-align:middle;"></i> Rule: Never risk more than 1–2% of your account on a single trade.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><i data-lucide="calendar" class="icon icon-sm"></i> Key Events This Week</div>
+            <div class="events-list">
+              <div class="event-row">
+                <span class="event-badge event-high">HIGH</span>
+                <div><strong>FOMC Meeting Minutes</strong><div class="event-sub">Federal Reserve rate outlook</div></div>
+              </div>
+              <div class="event-row">
+                <span class="event-badge event-med">MED</span>
+                <div><strong>CPI Inflation Report</strong><div class="event-sub">Consumer price data</div></div>
+              </div>
+              <div class="event-row">
+                <span class="event-badge event-med">MED</span>
+                <div><strong>NVDA Earnings</strong><div class="event-sub">After market close</div></div>
+              </div>
+              <div class="event-row">
+                <span class="event-badge event-low">LOW</span>
+                <div><strong>Retail Sales Data</strong><div class="event-sub">Consumer spending trends</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /dashboard -->
+
+    <!-- ═══════════════════════════════════════
+         MARKETS
+    ═══════════════════════════════════════ -->
+    <div id="section-markets" class="section">
+      <div class="section-intro">
+        <div class="eyebrow">Live Data via TradingView</div>
+        <h2>Markets</h2>
+        <p>Real-time prices across all major asset classes. Click any asset to view its full chart on TradingView.</p>
+      </div>
+
+      <div class="market-tabs">
+        <div class="market-tab active" data-tab="stocks"      onclick="showMarketTab('stocks')"><i data-lucide="building-2" class="icon icon-sm"></i> Stocks</div>
+        <div class="market-tab"        data-tab="indices"     onclick="showMarketTab('indices')"><i data-lucide="bar-chart-3" class="icon icon-sm"></i> Indices &amp; ETFs</div>
+        <div class="market-tab"        data-tab="commodities" onclick="showMarketTab('commodities')"><i data-lucide="gem" class="icon icon-sm"></i> Commodities</div>
+        <div class="market-tab"        data-tab="forex"       onclick="showMarketTab('forex')"><i data-lucide="arrow-left-right" class="icon icon-sm"></i> Forex</div>
+        <div class="market-tab"        data-tab="crypto"      onclick="showMarketTab('crypto')"><i data-lucide="bitcoin" class="icon icon-sm"></i> Crypto</div>
+        <div class="market-tab"        data-tab="chart"       onclick="showMarketTab('chart')"><i data-lucide="area-chart" class="icon icon-sm"></i> Full Chart</div>
+      </div>
+
+      <div id="tab-stocks"      class="tab-panel active"><div class="grid grid-auto" id="assets-stocks"></div></div>
+      <div id="tab-indices"     class="tab-panel"><div class="grid grid-auto" id="assets-indices"></div></div>
+      <div id="tab-commodities" class="tab-panel"><div class="grid grid-auto" id="assets-commodities"></div></div>
+      <div id="tab-forex"       class="tab-panel"><div class="grid grid-auto" id="assets-forex"></div></div>
+      <div id="tab-crypto"      class="tab-panel"><div class="grid grid-auto" id="assets-crypto"></div></div>
+
+      <div id="tab-chart" class="tab-panel">
+        <div class="tv-widget">
+          <div class="tradingview-widget-container" style="height:600px">
+            <div id="tradingview_chart"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/tv.js" async></script>
+            <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+              if (typeof TradingView !== 'undefined') {
+                new TradingView.widget({
+                  "width":"100%","height":600,"symbol":"NASDAQ:AAPL","interval":"D",
+                  "timezone":"America/New_York","theme":"dark","style":"1","locale":"en",
+                  "toolbar_bg":"#161b22","enable_publishing":false,"hide_top_toolbar":false,
+                  "hide_legend":false,"save_image":false,"container_id":"tradingview_chart",
+                  "studies":["RSI@tv-basicstudies","MACD@tv-basicstudies","BB@tv-basicstudies"]
+                });
+              }
+            });
+            </script>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">Full interactive chart with RSI, MACD, and Bollinger Bands pre-loaded. Use the symbol search to switch assets.</p>
+      </div>
+
+      <!-- Screener -->
+      <div class="screener-wrap">
+        <div class="section-intro sub-intro">
+          <div class="eyebrow">Stock Screener</div>
+          <h2 class="h3">Filter &amp; Discover Stocks</h2>
+        </div>
+        <div class="tv-widget">
+          <div class="tradingview-widget-container" style="height:550px">
+            <div class="tradingview-widget-container__widget" style="height:550px"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js" async>
+            {"width":"100%","height":550,"defaultColumn":"overview","defaultScreen":"most_capitalized","market":"america","showToolbar":true,"colorTheme":"dark","locale":"en","isTransparent":false}
+            </script>
+          </div>
+        </div>
+      </div>
+    </div><!-- /markets -->
+
+
+    <!-- ═══════════════════════════════════════
+         EDUCATION
+    ═══════════════════════════════════════ -->
+    <div id="section-education" class="section">
+      <div class="section-intro">
+        <div class="eyebrow">Complete Curriculum</div>
+        <h2>Education Center</h2>
+        <p>8 modules covering everything a beginner needs before entering the markets. Click any module to expand it, then click individual lessons inside.</p>
+      </div>
+
+      <div class="edu-layout">
+        <!-- module nav -->
+        <div class="edu-nav">
+          <div class="edu-nav-section">
+            <div class="edu-nav-section-label">Modules</div>
+            <div class="edu-nav-item active" data-edu="m1" onclick="scrollToModule('m1')"><div class="dot"></div>1. Market Fundamentals</div>
+            <div class="edu-nav-item" data-edu="m2" onclick="scrollToModule('m2')"><div class="dot"></div>2. Asset Classes</div>
+            <div class="edu-nav-item" data-edu="m3" onclick="scrollToModule('m3')"><div class="dot"></div>3. Market Mechanics</div>
+            <div class="edu-nav-item" data-edu="m4" onclick="scrollToModule('m4')"><div class="dot"></div>4. Technical Analysis</div>
+            <div class="edu-nav-item" data-edu="m5" onclick="scrollToModule('m5')"><div class="dot"></div>5. Fundamental Analysis</div>
+            <div class="edu-nav-item" data-edu="m6" onclick="scrollToModule('m6')"><div class="dot"></div>6. Risk Management</div>
+            <div class="edu-nav-item" data-edu="m7" onclick="scrollToModule('m7')"><div class="dot"></div>7. Trading Psychology</div>
+            <div class="edu-nav-item" data-edu="m8" onclick="scrollToModule('m8')"><div class="dot"></div>8. Common Mistakes</div>
+          </div>
+        </div>
+
+        <!-- modules -->
+        <div>
+
+<!-- ── MODULE 1 ── -->
+<div class="module-block" id="mod-m1">
+  <div class="module-header" id="mh-m1" onclick="toggleModule('m1')">
+    <div class="module-icon mod-blue"><i data-lucide="landmark" class="icon"></i></div>
+    <div class="module-info"><div class="module-title">Module 1 — Market Fundamentals</div><div class="module-meta">4 lessons · What financial markets are and how they work</div></div>
+    <div class="module-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div>
+  </div>
+  <div class="module-body" id="mb-m1">
+    <div class="module-content">
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-1-1" onclick="toggleLesson('1-1')"><div class="lesson-num">1</div><div class="lesson-title">What Are Financial Markets?</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-1-1"><div class="lesson-text">
+          <p>A <strong>financial market</strong> is any organized system where buyers and sellers trade financial assets — things like company shares, government debt, currencies, commodities, and derivatives. Markets exist to solve a fundamental economic problem: matching people who have capital (money) with those who need it.</p>
+          <h4>Why Markets Exist</h4>
+          <ul>
+            <li><strong>Price Discovery:</strong> Markets determine the fair value of assets through supply and demand in real time.</li>
+            <li><strong>Capital Allocation:</strong> Companies raise money by selling shares or bonds; that capital funds growth, jobs, and innovation.</li>
+            <li><strong>Risk Transfer:</strong> Investors can buy insurance-like instruments (options, futures) to transfer risk to others willing to bear it.</li>
+            <li><strong>Liquidity:</strong> Markets allow you to quickly convert investments back into cash when needed.</li>
+          </ul>
+          <h4>Types of Financial Markets</h4>
+          <ul>
+            <li><strong>Stock Market:</strong> Where shares of publicly traded companies are bought and sold (NYSE, NASDAQ).</li>
+            <li><strong>Bond Market:</strong> The largest market globally — where debt instruments are traded between governments, companies, and investors.</li>
+            <li><strong>Forex Market:</strong> Where currencies are exchanged. Operates 24 hours/day, 5 days/week. $7.5 trillion in daily volume.</li>
+            <li><strong>Commodity Markets:</strong> Physical goods like gold, oil, wheat, and natural gas traded via futures contracts.</li>
+            <li><strong>Derivatives Markets:</strong> Contracts whose value derives from an underlying asset — options, futures, swaps.</li>
+            <li><strong>Crypto Markets:</strong> Decentralized markets for digital assets, operating 24/7/365.</li>
+          </ul>
+          <div class="callout example"><strong>Example</strong>When Apple wants to expand, it can raise $10 billion by selling new shares in the stock market. Investors who buy those shares become part-owners and profit if Apple grows.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-1-2" onclick="toggleLesson('1-2')"><div class="lesson-num">2</div><div class="lesson-title">Primary vs Secondary Markets</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-1-2"><div class="lesson-text">
+          <p>There are two stages to how securities enter and trade in markets:</p>
+          <ul>
+            <li><strong>Primary Market:</strong> Where new securities are issued for the first time. An IPO (Initial Public Offering) is a company's first sale of stock to the public. Proceeds go directly to the company. Underwriters (investment banks like Goldman Sachs) facilitate this process.</li>
+            <li><strong>Secondary Market:</strong> After the IPO, shares trade between investors on stock exchanges. The company receives no money from these trades — only the first sale in the primary market generates funds for the company.</li>
+            <li><strong>OTC (Over-the-Counter):</strong> Trading that happens directly between two parties, not on a formal exchange. Many bonds and some stocks trade OTC. Less transparent, often wider spreads.</li>
+          </ul>
+          <div class="callout info"><strong>Key Insight</strong>When you buy AAPL on the stock market today, Apple gets none of that money. You're buying from another investor in the secondary market.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-1-3" onclick="toggleLesson('1-3')"><div class="lesson-num">3</div><div class="lesson-title">Who Participates in Markets?</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-1-3"><div class="lesson-text">
+          <h4>Retail Investors</h4>
+          <p>Individual traders and investors using personal capital. Historically disadvantaged by information gaps, but modern platforms like Robinhood, Fidelity, and Schwab have democratized access.</p>
+          <h4>Institutional Investors</h4>
+          <p>Large organizations managing vast pools of capital: hedge funds, mutual funds, pension funds, insurance companies, endowments. They account for ~70% of daily US stock trading volume and have access to better research, lower fees, and direct market access.</p>
+          <h4>Market Makers</h4>
+          <p>Firms (like Citadel Securities, Virtu) that continuously quote both buy and sell prices to provide liquidity. They profit from the bid-ask spread and take on the risk of holding inventory.</p>
+          <h4>Central Banks &amp; Governments</h4>
+          <p>The Federal Reserve, ECB, and other central banks participate in bond markets to implement monetary policy. They don't trade stocks, but their policy decisions move every market on the planet.</p>
+          <div class="callout tip"><strong>Tip</strong>As a retail trader, your edge is patience and selectivity — you don't have to trade every day. Institutions often must deploy capital constantly. Use that asymmetry to your advantage.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-1-4" onclick="toggleLesson('1-4')"><div class="lesson-num">4</div><div class="lesson-title">How a Trade Executes</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-1-4"><div class="lesson-text">
+          <p>When you click "Buy" on your brokerage app, a complex chain of events happens in milliseconds:</p>
+          <ol>
+            <li><strong>Order Entry:</strong> You place a buy order for 10 shares of AAPL at market price in your brokerage app.</li>
+            <li><strong>Order Routing:</strong> Your broker routes the order to a market maker (often via Payment for Order Flow) or directly to an exchange.</li>
+            <li><strong>Matching Engine:</strong> The exchange's matching engine finds a seller willing to sell at your price.</li>
+            <li><strong>Execution:</strong> The trade executes — shares are matched and confirmed in microseconds.</li>
+            <li><strong>Clearing:</strong> DTCC (Depository Trust &amp; Clearing Corporation) records the transaction.</li>
+            <li><strong>Settlement:</strong> T+1 — shares officially transfer to your account the next business day.</li>
+          </ol>
+          <div class="callout info"><strong>T+1 Settlement</strong>As of May 2024, US stocks settle T+1 (one business day). Previously T+2. This means you legally own the shares immediately but the formal transfer takes one day.</div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODULE 2 ── -->
+<div class="module-block" id="mod-m2">
+  <div class="module-header" id="mh-m2" onclick="toggleModule('m2')">
+    <div class="module-icon mod-green"><i data-lucide="briefcase" class="icon"></i></div>
+    <div class="module-info"><div class="module-title">Module 2 — Asset Classes</div><div class="module-meta">9 lessons · Stocks, bonds, ETFs, commodities, forex, crypto, indices, options, futures</div></div>
+    <div class="module-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div>
+  </div>
+  <div class="module-body" id="mb-m2">
+    <div class="module-content">
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-2-1" onclick="toggleLesson('2-1')"><div class="lesson-num">1</div><div class="lesson-title">Stocks — Ownership in Companies</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-2-1"><div class="lesson-text">
+          <p>A <strong>stock</strong> (also called a share or equity) represents fractional ownership in a corporation. When you own stock, you are a <em>shareholder</em> — legally entitled to a proportional claim on the company's assets and earnings.</p>
+          <h4>Key Stock Concepts</h4>
+          <ul>
+            <li><strong>Common Stock:</strong> Standard shares with voting rights at annual meetings. Dividends are not guaranteed.</li>
+            <li><strong>Preferred Stock:</strong> Pays fixed dividends before common shareholders but typically lacks voting rights. Behaves more like a bond.</li>
+            <li><strong>Stock Splits:</strong> When a company divides existing shares into multiple new ones (e.g., 2-for-1 split). Lowers the share price but doesn't change total value. Apple has split 5 times.</li>
+            <li><strong>Dividends:</strong> Cash payments made to shareholders, usually quarterly, from company profits. Not all companies pay them — growth companies typically reinvest earnings instead.</li>
+          </ul>
+          <h4>Stock Categories</h4>
+          <ul>
+            <li><strong>Growth Stocks:</strong> Companies expected to grow faster than average. High P/E ratios, rarely pay dividends. Example: NVDA, TSLA.</li>
+            <li><strong>Value Stocks:</strong> Trading below intrinsic value — often mature companies. Lower P/E. Example: BRK.B, JPM.</li>
+            <li><strong>Dividend Stocks:</strong> Pay reliable dividends. Popular with income investors. Example: JNJ, KO, T.</li>
+            <li><strong>Blue-Chip Stocks:</strong> Large, well-established, financially stable companies. The "safe" stocks — AAPL, MSFT, BRK.</li>
+          </ul>
+          <h4>Size Classification by Market Cap</h4>
+          <ul>
+            <li>Mega-cap: &gt;$200B (AAPL, MSFT, NVDA)</li>
+            <li>Large-cap: $10B–$200B</li>
+            <li>Mid-cap: $2B–$10B</li>
+            <li>Small-cap: $300M–$2B</li>
+            <li>Micro-cap: &lt;$300M (much higher risk)</li>
+          </ul>
+          <div class="callout example"><strong>Example</strong>You buy 10 shares of Apple at $227. Your total investment is $2,270. Apple rises to $250 — your 10 shares are now worth $2,500. You've made $230 in capital gains.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-2-2" onclick="toggleLesson('2-2')"><div class="lesson-num">2</div><div class="lesson-title">Bonds — Lending to Governments &amp; Companies</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-2-2"><div class="lesson-text">
+          <p>A <strong>bond</strong> is a debt instrument. When you buy a bond, you are lending money to the issuer (government or corporation) in exchange for regular interest payments (called the <em>coupon</em>) and repayment of the principal at <em>maturity</em>.</p>
+          <h4>Bond Terminology</h4>
+          <ul>
+            <li><strong>Par Value (Face Value):</strong> The amount repaid at maturity, typically $1,000 per bond.</li>
+            <li><strong>Coupon Rate:</strong> Annual interest rate paid on par value. A 5% coupon on a $1,000 bond = $50/year.</li>
+            <li><strong>Maturity Date:</strong> When the principal is repaid. Ranges from 1 month (T-Bills) to 30 years (T-Bonds).</li>
+            <li><strong>Yield:</strong> The actual return you earn, accounting for the price you paid. If bond price rises, yield falls (inverse relationship).</li>
+          </ul>
+          <h4>Types of Bonds</h4>
+          <ul>
+            <li><strong>US Treasury Bonds:</strong> Safest bonds in the world. Backed by the US government. T-Bills (&lt;1yr), T-Notes (2–10yr), T-Bonds (20–30yr).</li>
+            <li><strong>Municipal Bonds (Munis):</strong> Issued by states and cities. Often tax-exempt — favorable for high-income investors.</li>
+            <li><strong>Corporate Bonds:</strong> Higher yield than Treasuries but higher default risk. Investment-grade (BBB+ and above) vs. junk bonds (below BBB-).</li>
+          </ul>
+          <div class="callout info"><strong>Key Relationship</strong>Bond prices and yields move inversely. When interest rates rise, existing bond prices fall (because new bonds offer better rates). This is called interest rate risk.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-2-3" onclick="toggleLesson('2-3')"><div class="lesson-num">3</div><div class="lesson-title">ETFs — Instant Diversification</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-2-3"><div class="lesson-text">
+          <p>An <strong>ETF (Exchange-Traded Fund)</strong> is a basket of securities — stocks, bonds, or commodities — bundled together and traded on an exchange like a single stock. They combine the diversification of a mutual fund with the tradability of a stock.</p>
+          <h4>Why ETFs are Great for Beginners</h4>
+          <ul>
+            <li><strong>Instant Diversification:</strong> SPY gives you exposure to 500 companies with one purchase.</li>
+            <li><strong>Low Cost:</strong> Index ETFs often charge 0.03–0.20% annually. Mutual funds often charge 1%+.</li>
+            <li><strong>Tax Efficiency:</strong> ETFs rarely trigger taxable events. Mutual funds distribute capital gains yearly.</li>
+            <li><strong>Transparency:</strong> Holdings are disclosed daily.</li>
+            <li><strong>Liquidity:</strong> Trade any time during market hours at live prices.</li>
+          </ul>
+          <h4>Common ETF Types</h4>
+          <ul>
+            <li><strong>Index ETFs:</strong> SPY (S&amp;P 500), QQQ (NASDAQ-100), DIA (Dow Jones), IWM (Russell 2000)</li>
+            <li><strong>Sector ETFs:</strong> XLK (Tech), XLF (Financials), XLE (Energy), XLV (Healthcare)</li>
+            <li><strong>International:</strong> EEM (Emerging Markets), EFA (Developed International)</li>
+            <li><strong>Bond ETFs:</strong> AGG (Aggregate Bond), TLT (20+ Year Treasuries), HYG (High-Yield)</li>
+            <li><strong>Commodity ETFs:</strong> GLD (Gold), SLV (Silver), USO (Oil)</li>
+            <li><strong>Leveraged ETFs:</strong> TQQQ (3x NASDAQ) — amplified returns AND losses. Not for beginners.</li>
+            <li><strong>Inverse ETFs:</strong> SQQQ (3x short NASDAQ) — profits when market falls. Very risky, designed for short-term hedging only.</li>
+          </ul>
+          <div class="callout warning"><strong>Warning — Leveraged ETFs</strong>3x leveraged ETFs like TQQQ experience "volatility decay" — even if the underlying index returns flat over a year, a leveraged ETF can lose significant value due to daily rebalancing.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-2-4" onclick="toggleLesson('2-4')"><div class="lesson-num">4</div><div class="lesson-title">Commodities — Physical Goods Markets</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-2-4"><div class="lesson-text">
+          <p><strong>Commodities</strong> are raw materials or primary agricultural products that can be bought and sold. They're categorized into <em>hard</em> (mined/extracted) and <em>soft</em> (grown/raised) commodities.</p>
+          <h4>Hard Commodities</h4>
+          <ul>
+            <li><strong>Gold (XAU):</strong> Safe-haven asset. Rises during uncertainty, inflation hedging. Inversely correlated to USD and real interest rates.</li>
+            <li><strong>Silver (XAG):</strong> Both precious metal and industrial metal. More volatile than gold. Tracks gold but amplified.</li>
+            <li><strong>Crude Oil (WTI/Brent):</strong> WTI (West Texas Intermediate) is the US benchmark; Brent is the global benchmark. Driven by OPEC decisions, geopolitics, USD strength, and global demand.</li>
+            <li><strong>Natural Gas:</strong> Highly seasonal (cold winters = high demand). Very volatile.</li>
+            <li><strong>Copper:</strong> Known as "Dr. Copper" because it's a leading indicator of global economic health — rising copper = growing economies.</li>
+          </ul>
+          <h4>Soft Commodities</h4>
+          <ul>
+            <li>Corn, Wheat, Soybeans, Coffee, Cotton, Sugar — driven by weather, crop yields, demand forecasts.</li>
+          </ul>
+          <h4>How to Trade Commodities</h4>
+          <ul>
+            <li>Futures contracts (direct exposure, requires margin)</li>
+            <li>ETFs: GLD, SLV, USO, UNG, PDBC</li>
+            <li>Stocks of commodity producers: ExxonMobil, Barrick Gold, Freeport-McMoRan</li>
+          </ul>
+          <div class="callout tip"><strong>Correlation to Know</strong>Gold and the US Dollar are inversely correlated. When the dollar weakens, gold typically rises — and vice versa. Oil and the Canadian dollar (CAD) are positively correlated since Canada is a major oil exporter.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-2-5" onclick="toggleLesson('2-5')"><div class="lesson-num">5</div><div class="lesson-title">Forex — Currency Markets</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-2-5"><div class="lesson-text">
+          <p>The <strong>foreign exchange (forex) market</strong> is where currencies are bought and sold against each other. With $7.5 trillion traded daily, it is the largest and most liquid financial market in the world. It operates 24 hours a day, five days a week across four major sessions: Sydney, Tokyo, London, and New York.</p>
+          <h4>Currency Pairs</h4>
+          <ul>
+            <li><strong>Major Pairs:</strong> EUR/USD, GBP/USD, USD/JPY, USD/CHF, USD/CAD, AUD/USD, NZD/USD — all include the US dollar. Tightest spreads, most liquidity.</li>
+            <li><strong>Minor Pairs (Cross Pairs):</strong> EUR/GBP, EUR/JPY, GBP/JPY — don't include USD. Slightly wider spreads.</li>
+            <li><strong>Exotic Pairs:</strong> USD/TRY, USD/ZAR — major currency vs. emerging market. Very wide spreads, high volatility, low liquidity.</li>
+          </ul>
+          <h4>Key Concepts</h4>
+          <ul>
+            <li><strong>Pip:</strong> Smallest price move for most pairs (0.0001). For USD/JPY it's 0.01.</li>
+            <li><strong>Lot Size:</strong> Standard lot = 100,000 units of base currency. Mini lot = 10,000. Micro lot = 1,000.</li>
+            <li><strong>Leverage:</strong> Forex brokers often offer 50:1 to 500:1 leverage. Enormously risky — a 0.2% adverse move on 500:1 leverage wipes your account.</li>
+          </ul>
+          <h4>What Drives Currency Prices</h4>
+          <ul>
+            <li>Interest rate differentials (higher rates = stronger currency)</li>
+            <li>GDP growth relative to other countries</li>
+            <li>Inflation data (CPI)</li>
+            <li>Political stability and geopolitical events</li>
+            <li>Central bank policy (Federal Reserve, ECB, BOJ, BOE)</li>
+          </ul>
+          <div class="callout warning"><strong>Warning</strong>Studies show ~70-80% of retail forex traders lose money. The combination of high leverage, 24-hour trading, and tight spreads that still cost more than they appear makes forex extremely challenging for beginners.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-2-6" onclick="toggleLesson('2-6')"><div class="lesson-num">6</div><div class="lesson-title">Cryptocurrencies — Digital Assets</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-2-6"><div class="lesson-text">
+          <p><strong>Cryptocurrencies</strong> are decentralized digital assets secured by cryptography and recorded on a distributed ledger called a <strong>blockchain</strong>. Unlike stocks or bonds, they aren't backed by earnings or collateral — their value is driven by speculation, utility, adoption, and network effects.</p>
+          <h4>Key Cryptocurrencies</h4>
+          <ul>
+            <li><strong>Bitcoin (BTC):</strong> The original. Store of value narrative — "digital gold." Fixed supply of 21 million coins. Halving events (every 4 years) reduce new supply.</li>
+            <li><strong>Ethereum (ETH):</strong> Programmable blockchain enabling smart contracts and DeFi. The backbone of the decentralized application ecosystem.</li>
+            <li><strong>Altcoins:</strong> All cryptocurrencies other than Bitcoin. Include Solana (fast transactions), BNB (Binance ecosystem), XRP (cross-border payments), and thousands more.</li>
+            <li><strong>Stablecoins:</strong> USDT, USDC — pegged to $1. Used as on/off ramp and for DeFi yield farming.</li>
+          </ul>
+          <h4>Key Risks</h4>
+          <ul>
+            <li>Extreme volatility — BTC has dropped 80%+ multiple times</li>
+            <li>Regulatory uncertainty — government crackdowns can crash prices overnight</li>
+            <li>Exchange risk — FTX collapsed in 2022, losing billions of customer funds</li>
+            <li>Security risk — private key loss = permanent loss of funds</li>
+            <li>No intrinsic value — prices are driven purely by sentiment and speculation</li>
+          </ul>
+          <div class="callout tip"><strong>If Trading Crypto</strong>Use reputable exchanges (Coinbase, Kraken, Binance.US). Never store significant amounts on an exchange — use a hardware wallet. Only allocate a small portion of your portfolio you can afford to lose entirely.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-2-7" onclick="toggleLesson('2-7')"><div class="lesson-num">7</div><div class="lesson-title">Market Indices — Measuring the Market</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-2-7"><div class="lesson-text">
+          <p>A <strong>market index</strong> tracks the performance of a group of stocks to represent a segment of the market. Indices are the benchmark everyone references when they say "the market is up/down today."</p>
+          <h4>Major US Indices</h4>
+          <ul>
+            <li><strong>S&amp;P 500:</strong> 500 largest US companies by market cap. Market-cap weighted. The most widely followed benchmark. Represents ~80% of US market value.</li>
+            <li><strong>Dow Jones (DJIA):</strong> 30 large, blue-chip US companies. Price-weighted (not market-cap weighted — a $500 stock moves the index more than a $50 stock). Less representative than S&amp;P 500.</li>
+            <li><strong>NASDAQ Composite:</strong> All stocks on the NASDAQ exchange — heavily tech-weighted. The NASDAQ-100 (QQQ) tracks the top 100 non-financial NASDAQ companies.</li>
+            <li><strong>Russell 2000:</strong> 2,000 small-cap US companies. Leading indicator of domestic economic health.</li>
+            <li><strong>VIX:</strong> The "Fear Index." Measures expected 30-day volatility of S&amp;P 500 options. VIX &gt;30 = high fear; VIX &lt;20 = complacency.</li>
+          </ul>
+          <h4>Global Indices</h4>
+          <ul>
+            <li>UK: FTSE 100 | Germany: DAX | Japan: Nikkei 225 | Hong Kong: Hang Seng | China: SSE Composite | Emerging Markets: MSCI EM</li>
+          </ul>
+          <div class="callout example"><strong>Investing in the Index</strong>Rather than picking individual stocks, many investors simply buy SPY or VOO (Vanguard S&P 500 ETF) to capture broad market returns. Over 90% of active fund managers underperform the S&P 500 over 15+ years.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-2-8" onclick="toggleLesson('2-8')"><div class="lesson-num">8</div><div class="lesson-title">Options — The Right to Buy or Sell</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-2-8"><div class="lesson-text">
+          <p><strong>Options</strong> are derivatives that give the buyer the <em>right, but not the obligation</em>, to buy or sell an underlying asset at a specific price (the <em>strike price</em>) before or on a specific date (the <em>expiration</em>). One options contract represents 100 shares.</p>
+          <h4>Call vs Put Options</h4>
+          <ul>
+            <li><strong>Call Option:</strong> Gives the right to <em>buy</em> shares at the strike price. Profitable when the stock rises above the strike price.</li>
+            <li><strong>Put Option:</strong> Gives the right to <em>sell</em> shares at the strike price. Profitable when the stock falls below the strike price.</li>
+          </ul>
+          <h4>Options Terminology</h4>
+          <ul>
+            <li><strong>Premium:</strong> What you pay for the option. This is your maximum loss as a buyer.</li>
+            <li><strong>In-the-Money (ITM):</strong> Option has intrinsic value. For a call: stock price &gt; strike price.</li>
+            <li><strong>Out-of-the-Money (OTM):</strong> Option has no intrinsic value yet. Cheaper but lower probability of profit.</li>
+            <li><strong>Expiration:</strong> Options expire worthless if not exercised. Most retail traders sell before expiration.</li>
+          </ul>
+          <h4>The Greeks</h4>
+          <ul>
+            <li><strong>Delta:</strong> How much the option price moves per $1 move in the stock. ATM options ≈ 0.50 delta.</li>
+            <li><strong>Theta:</strong> Time decay. Options lose value every day as expiration approaches. Buyers pay theta; sellers collect it.</li>
+            <li><strong>Vega:</strong> Sensitivity to volatility. Higher volatility = more expensive options.</li>
+            <li><strong>Gamma:</strong> Rate of change of delta. Highest near expiration and at-the-money.</li>
+          </ul>
+          <div class="callout warning"><strong>Warning</strong>Over 80% of options expire worthless. Options can go to zero quickly. Never risk money on options you can't afford to lose entirely. Options are NOT suitable for most beginners.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-2-9" onclick="toggleLesson('2-9')"><div class="lesson-num">9</div><div class="lesson-title">Futures — Contracts to Buy/Sell Later</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-2-9"><div class="lesson-text">
+          <p><strong>Futures contracts</strong> are legally binding agreements to buy or sell a specific asset at a predetermined price on a future date. Unlike options, futures obligate both parties to complete the transaction.</p>
+          <h4>Common Futures Markets</h4>
+          <ul>
+            <li><strong>Equity Futures:</strong> E-mini S&amp;P 500 (/ES), E-mini NASDAQ-100 (/NQ), Micro E-mini contracts for retail traders.</li>
+            <li><strong>Commodity Futures:</strong> Crude Oil (/CL), Gold (/GC), Natural Gas (/NG), Corn (/ZC)</li>
+            <li><strong>Currency Futures:</strong> EUR/USD futures on CME</li>
+            <li><strong>Treasury Futures:</strong> 10-Year Note (/ZN), 30-Year Bond (/ZB)</li>
+          </ul>
+          <h4>Key Concepts</h4>
+          <ul>
+            <li><strong>Margin:</strong> Futures require posting only a fraction of the contract value (initial margin). Highly leveraged — the E-mini S&amp;P 500 controls $275,000+ but requires only ~$12,000 margin.</li>
+            <li><strong>Rollover:</strong> Futures expire quarterly. Traders "roll" positions to the next contract month before expiration.</li>
+            <li><strong>Contango:</strong> Futures price &gt; spot price. Normal for most commodities. Storage and carry costs are priced in.</li>
+            <li><strong>Backwardation:</strong> Futures price &lt; spot price. Signals high current demand or supply shortage.</li>
+          </ul>
+          <div class="callout tip"><strong>For Beginners</strong>Futures trading requires significant capital, understanding of margin, and experience managing fast-moving positions. Most beginners should gain experience trading stocks and ETFs first.</div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODULE 3 ── -->
+<div class="module-block" id="mod-m3">
+  <div class="module-header" id="mh-m3" onclick="toggleModule('m3')">
+    <div class="module-icon mod-purple"><i data-lucide="settings" class="icon"></i></div>
+    <div class="module-info"><div class="module-title">Module 3 — Market Mechanics</div><div class="module-meta">8 lessons · How markets function day-to-day</div></div>
+    <div class="module-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div>
+  </div>
+  <div class="module-body" id="mb-m3">
+    <div class="module-content">
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-3-1" onclick="toggleLesson('3-1')"><div class="lesson-num">1</div><div class="lesson-title">Volume &amp; Liquidity</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-3-1"><div class="lesson-text">
+          <p><strong>Volume</strong> is the total number of shares (or contracts) traded in a given period. It's one of the most important metrics in trading — it confirms trends, signals reversals, and shows where institutional interest lies.</p>
+          <ul>
+            <li><strong>High Volume + Price Rise:</strong> Strong buying conviction. Trend is likely to continue.</li>
+            <li><strong>High Volume + Price Drop:</strong> Strong selling pressure. Potential breakdown.</li>
+            <li><strong>Low Volume + Price Move:</strong> Weak conviction. Can be a false breakout.</li>
+            <li><strong>Average Volume:</strong> Always compare to the 30-day average. 2x average volume on a move is significant.</li>
+          </ul>
+          <p><strong>Liquidity</strong> refers to how easily you can buy or sell an asset without significantly affecting its price. A highly liquid stock (AAPL, SPY) can handle millions of shares without much price impact. An illiquid penny stock might move 10% on a $5,000 order.</p>
+          <div class="callout tip"><strong>Beginner Rule</strong>Stick to high-volume, highly liquid stocks and ETFs. Low-liquidity assets have wide spreads, unpredictable price moves, and are easy to get stuck in.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-3-2" onclick="toggleLesson('3-2')"><div class="lesson-num">2</div><div class="lesson-title">Bid-Ask Spread</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-3-2"><div class="lesson-text">
+          <p>The <strong>bid price</strong> is the highest price a buyer is willing to pay. The <strong>ask price</strong> (also called the offer) is the lowest price a seller will accept. The difference between these two is the <strong>spread</strong> — and it represents an immediate cost every time you trade.</p>
+          <div class="callout example"><strong>Example</strong>AAPL bid: $227.50 | Ask: $227.52. Spread = $0.02. If you buy at market and immediately sell, you'd lose $0.02 per share (about $2 on 100 shares) just from the spread.</div>
+          <ul>
+            <li><strong>Tight spreads ($0.01–$0.05):</strong> Liquid assets — AAPL, SPY, QQQ. Low trading cost.</li>
+            <li><strong>Wide spreads ($0.20+):</strong> Illiquid stocks, options on smaller stocks. High cost to trade.</li>
+            <li><strong>Why Spreads Matter for Options:</strong> Options can have spreads of $0.50–$2.00+. On a $2 option, a $0.50 spread is a 25% immediate loss. Always use limit orders for options.</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-3-3" onclick="toggleLesson('3-3')"><div class="lesson-num">3</div><div class="lesson-title">Volatility — Measuring Market Movement</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-3-3"><div class="lesson-text">
+          <p><strong>Volatility</strong> measures how much and how quickly prices move. High volatility = large, fast price swings. Low volatility = steady, slow price movement. It's not inherently good or bad — it's context-dependent.</p>
+          <ul>
+            <li><strong>Historical Volatility (HV):</strong> How much an asset has actually moved in the past, expressed as an annualized standard deviation.</li>
+            <li><strong>Implied Volatility (IV):</strong> The market's expectation of future volatility, derived from options pricing. When IV is high, options are expensive. When IV is low, options are cheap.</li>
+            <li><strong>VIX:</strong> The CBOE Volatility Index — often called the "fear gauge." Measures 30-day expected volatility of the S&amp;P 500. VIX &gt;30 = high fear; VIX &lt;15 = complacency; VIX 15–25 = normal.</li>
+            <li><strong>ATR (Average True Range):</strong> Measures the average daily price range of an asset. Useful for setting stop losses and position sizing.</li>
+          </ul>
+          <div class="callout info"><strong>IV Crush</strong>Implied volatility often collapses dramatically after earnings reports are released. This is called "IV crush." Options buyers who hold through earnings often lose money even if the stock moves in their favor — because the inflated premium deflates instantly.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-3-4" onclick="toggleLesson('3-4')"><div class="lesson-num">4</div><div class="lesson-title">Market Capitalization</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-3-4"><div class="lesson-text">
+          <p><strong>Market capitalization</strong> = Share Price × Total Shares Outstanding. It's the total market value of a company, used to compare companies, build indices, and classify investment size.</p>
+          <div class="callout example"><strong>Calculation</strong>Apple: ~15.4 billion shares × $227/share = ~$3.5 trillion market cap. This makes Apple the most valuable company on earth.</div>
+          <ul>
+            <li><strong>Free Float:</strong> The shares actually available for public trading (excludes insider/locked shares). Most indices use free-float market cap.</li>
+            <li><strong>Fully Diluted Market Cap:</strong> Includes all potential shares from options, warrants, convertible debt.</li>
+            <li><strong>In Crypto:</strong> Market cap = Current Price × Circulating Supply. Often inflated by low float, high fully-diluted valuations.</li>
+          </ul>
+          <p>In S&amp;P 500 index funds, larger companies receive more weight. Apple alone represents about 7% of SPY — so Apple's moves significantly affect the index.</p>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-3-5" onclick="toggleLesson('3-5')"><div class="lesson-num">5</div><div class="lesson-title">Leverage &amp; Margin</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-3-5"><div class="lesson-text">
+          <p><strong>Leverage</strong> allows you to control a larger position than your actual capital. A brokerage lending you money to buy more shares is called <strong>margin trading</strong>. Leverage amplifies both gains AND losses proportionally.</p>
+          <ul>
+            <li><strong>Reg T Margin:</strong> Standard US brokerage margin. Allows 2:1 leverage on most stocks. You need $5,000 to buy $10,000 worth of stock.</li>
+            <li><strong>Pattern Day Trader (PDT) Rule:</strong> If you make 4+ day trades in 5 business days with under $25,000 in your account, your account will be flagged and restricted. Required minimum: $25,000 for day trading.</li>
+            <li><strong>Margin Call:</strong> If your account value falls below the broker's maintenance margin requirement, they will demand more cash — or begin liquidating your positions at market price, often at the worst possible moment.</li>
+          </ul>
+          <div class="callout warning"><strong>Leverage is a Double-Edged Sword</strong>At 4:1 leverage, a 25% loss in the stock wipes out your entire investment (not just 25%). Warren Buffett: "Never risk what you have and need for what you don't have and don't need." Avoid margin as a beginner.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-3-6" onclick="toggleLesson('3-6')"><div class="lesson-num">6</div><div class="lesson-title">Bull vs Bear Markets</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-3-6"><div class="lesson-text">
+          <ul>
+            <li><strong>Bull Market:</strong> Sustained period of rising prices (+20% from recent lows), strong economic growth, low unemployment, rising corporate earnings. Investor sentiment is optimistic. The US has been in a secular bull market since 2009 (with temporary interruptions).</li>
+            <li><strong>Bear Market:</strong> A decline of 20% or more from recent highs, lasting at least two months. Characterized by pessimism, selling pressure, and often accompanied by economic recession. Historical bear markets last an average of ~9–16 months.</li>
+            <li><strong>Correction:</strong> A 10–19% pullback from a recent high. Common and healthy — corrections happen on average once per year. Not a bear market.</li>
+            <li><strong>Crash:</strong> Rapid decline of 20%+ in a very short period. Examples: Black Monday 1987 (-22% in one day), COVID crash 2020 (-34% in 33 days).</li>
+            <li><strong>Recession:</strong> Two consecutive quarters of negative GDP growth. Not the same as a bear market — markets often fall before a recession is declared and recover before it ends.</li>
+          </ul>
+          <div class="callout example"><strong>Historical Bear Markets</strong>Dot-com crash 2000–2002: S&P 500 fell 49%. Financial crisis 2008–2009: fell 57%. COVID 2020: fell 34% (recovered in 5 months). Average bear market recovery takes 3–4 years.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-3-7" onclick="toggleLesson('3-7')"><div class="lesson-num">7</div><div class="lesson-title">Long vs Short Positions</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-3-7"><div class="lesson-text">
+          <p>You can profit in markets whether prices go up OR down — depending on your position direction.</p>
+          <ul>
+            <li><strong>Long Position (Buying):</strong> You buy an asset expecting it to increase in value. Your profit = selling price − buying price. Maximum loss is limited to your investment (it can only go to zero).</li>
+            <li><strong>Short Position (Short Selling):</strong> You borrow shares from your broker, sell them immediately, then aim to buy them back later at a lower price. You profit from falling prices. Example: borrow 100 TSLA shares at $200, sell them. Stock drops to $150 — buy back 100 shares for $15,000. Profit: $5,000 (minus fees).</li>
+            <li><strong>Short Squeeze:</strong> When a heavily shorted stock rises unexpectedly, forcing short sellers to buy back shares to limit losses. This buying pressure accelerates the price rise. GameStop (GME) in January 2021 rose 1,700% due to a short squeeze.</li>
+            <li><strong>Short Interest:</strong> The percentage of a company's float that is currently sold short. High short interest (&gt;20%) increases the probability of a squeeze.</li>
+          </ul>
+          <div class="callout warning"><strong>Shorting Risk</strong>Unlike a long position (max loss: 100% of investment), a short position has theoretically unlimited loss — a stock can rise infinitely. GameStop crushed many hedge funds. Always use stop losses when shorting.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-3-8" onclick="toggleLesson('3-8')"><div class="lesson-num">8</div><div class="lesson-title">Order Types</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-3-8"><div class="lesson-text">
+          <p>How you place a trade determines how and when it fills. Using the right order type is critical for cost efficiency and risk management.</p>
+          <ul>
+            <li><strong>Market Order:</strong> Executes immediately at the best available price. Guaranteed execution but not guaranteed price. Avoid in volatile conditions or illiquid stocks.</li>
+            <li><strong>Limit Order:</strong> Sets a maximum price you'll pay (buy limit) or minimum price you'll accept (sell limit). No guaranteed fill, but guarantees price. <em>Always use limit orders for options.</em></li>
+            <li><strong>Stop (Stop-Loss) Order:</strong> Triggers a market order once price reaches the stop price. Used to exit a losing position automatically. Important: in a fast-moving market, execution may be worse than the stop price (slippage).</li>
+            <li><strong>Stop-Limit Order:</strong> Triggers a limit order at a specific price once the stop level is reached. Safer in illiquid conditions but risks not filling at all if price moves too fast.</li>
+            <li><strong>Trailing Stop:</strong> Stop level moves with the price. If stock rises $5 after entry and you set a $2 trailing stop, your stop follows the price up, locking in gains.</li>
+            <li><strong>GTC (Good Till Cancelled):</strong> Order stays open until executed or you cancel it. Lasts up to 60–90 days depending on broker.</li>
+            <li><strong>Day Order:</strong> Expires at end of trading day if not filled.</li>
+          </ul>
+          <div class="callout tip"><strong>Best Practice</strong>For entries: use limit orders to avoid paying the full spread. For exits (stop losses): use stop-market orders to ensure you actually get out. For options: always use limit orders — never market orders.</div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ── MODULE 4 ── -->
+<div class="module-block" id="mod-m4">
+  <div class="module-header" id="mh-m4" onclick="toggleModule('m4')">
+    <div class="module-icon mod-orange"><i data-lucide="ruler" class="icon"></i></div>
+    <div class="module-info"><div class="module-title">Module 4 — Technical Analysis</div><div class="module-meta">7 lessons · Charts, patterns, and indicators</div></div>
+    <div class="module-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div>
+  </div>
+  <div class="module-body" id="mb-m4">
+    <div class="module-content">
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-4-1" onclick="toggleLesson('4-1')"><div class="lesson-num">1</div><div class="lesson-title">Reading Charts &amp; Timeframes</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-4-1"><div class="lesson-text">
+          <p><strong>Technical analysis</strong> is the study of price action and volume history to forecast future price movements. Unlike fundamental analysis, TA doesn't care about what a company does — only what its chart does.</p>
+          <h4>Chart Types</h4>
+          <ul>
+            <li><strong>Candlestick Chart:</strong> The most popular. Shows open, high, low, close (OHLC) for each period.</li>
+            <li><strong>Line Chart:</strong> Plots only closing prices. Useful for identifying trends but less information.</li>
+            <li><strong>Bar Chart (OHLC):</strong> Similar to candlesticks without the filled body.</li>
+          </ul>
+          <h4>Timeframes</h4>
+          <ul>
+            <li><strong>1m, 5m, 15m:</strong> Used by day traders for intraday entries and exits.</li>
+            <li><strong>1H, 4H:</strong> Swing trader timeframes. Good balance of signal quality and speed.</li>
+            <li><strong>Daily (1D):</strong> Most reliable timeframe. Preferred by most swing and position traders.</li>
+            <li><strong>Weekly, Monthly:</strong> Long-term trend identification. Macro view.</li>
+          </ul>
+          <div class="callout tip"><strong>Multi-Timeframe Analysis</strong>Always check a higher timeframe to understand the macro trend before trading on a lower timeframe. A bullish setup on the 15m chart means nothing if the daily chart is in a clear downtrend.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-4-2" onclick="toggleLesson('4-2')"><div class="lesson-num">2</div><div class="lesson-title">Candlestick Charts &amp; Key Patterns</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-4-2"><div class="lesson-text">
+          <p>Each <strong>candlestick</strong> tells the story of one period (1 minute, 1 day, 1 week, etc.). The <em>body</em> shows the open-to-close range. <em>Wicks</em> (shadows) show the high and low. A green/white candle = price closed higher than it opened. Red/black = price closed lower.</p>
+          <h4>Single-Candle Patterns</h4>
+          <ul>
+            <li><strong>Doji:</strong> Open ≈ Close. Indecision. The market is undecided. Significant at extremes.</li>
+            <li><strong>Hammer:</strong> Small body, long lower wick. Appears at bottoms. Shows buyers stepped in after a selloff.</li>
+            <li><strong>Shooting Star:</strong> Small body, long upper wick. Appears at tops. Shows sellers rejected a rally.</li>
+            <li><strong>Spinning Top:</strong> Small body, roughly equal wicks. Indecision.</li>
+            <li><strong>Marubozu:</strong> No wicks — pure momentum candle. Strong buy (green) or sell (red) signal.</li>
+          </ul>
+          <h4>Two/Three Candle Patterns</h4>
+          <ul>
+            <li><strong>Bullish Engulfing:</strong> A large green candle that completely engulfs the prior red candle. Reversal signal at support.</li>
+            <li><strong>Bearish Engulfing:</strong> A large red candle that engulfs the prior green candle. Reversal at resistance.</li>
+            <li><strong>Morning Star:</strong> Three-candle bullish reversal: large red, small indecision candle, large green.</li>
+            <li><strong>Evening Star:</strong> Opposite — bearish reversal at a top.</li>
+            <li><strong>Harami:</strong> Small candle inside the previous candle's body. Potential trend pause.</li>
+          </ul>
+          <div class="callout warning"><strong>Context Is Everything</strong>Candlestick patterns only have meaning at key levels — support, resistance, trend lines. A hammer in the middle of nowhere is meaningless. A hammer at major support after a strong downtrend is highly significant.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-4-3" onclick="toggleLesson('4-3')"><div class="lesson-num">3</div><div class="lesson-title">Support &amp; Resistance</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-4-3"><div class="lesson-text">
+          <p><strong>Support</strong> is a price level where buying demand is strong enough to prevent further decline — prices have historically bounced upward from this level. <strong>Resistance</strong> is the opposite — a ceiling where selling pressure halts price advances.</p>
+          <h4>Types of Support &amp; Resistance</h4>
+          <ul>
+            <li><strong>Horizontal Levels:</strong> Previous highs and lows on the chart. The most reliable. Round numbers ($100, $200, $500) often act as psychological S/R.</li>
+            <li><strong>Dynamic S/R:</strong> Moving averages (20 EMA, 50 SMA, 200 SMA) act as moving support/resistance levels.</li>
+            <li><strong>Trend Lines:</strong> Diagonal lines connecting successive highs (downtrend) or lows (uptrend).</li>
+            <li><strong>Fibonacci Levels:</strong> Key retracement levels (23.6%, 38.2%, 50%, 61.8%) derived from the Fibonacci sequence. Widely watched and self-fulfilling.</li>
+          </ul>
+          <h4>Role Reversal (Flip)</h4>
+          <p>When price breaks through a resistance level convincingly, that level often becomes support — and vice versa. This is called a "flip" or role reversal. It's one of the most reliable concepts in technical analysis.</p>
+          <div class="callout example"><strong>Example</strong>AAPL repeatedly failed to break $230 (resistance). Once it finally closes above $230 on heavy volume, that $230 level becomes support — buyers who missed the breakout now buy at $230 on pullbacks.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-4-4" onclick="toggleLesson('4-4')"><div class="lesson-num">4</div><div class="lesson-title">Moving Averages</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-4-4"><div class="lesson-text">
+          <p><strong>Moving averages</strong> smooth out price data to identify the underlying trend. They lag price (they're calculated from past data), but they're one of the most useful and universally-watched indicators.</p>
+          <ul>
+            <li><strong>SMA (Simple Moving Average):</strong> Average of the last N closing prices. Equal weight to each period.</li>
+            <li><strong>EMA (Exponential Moving Average):</strong> Gives more weight to recent prices. Reacts faster to price changes. Most active traders prefer EMAs.</li>
+          </ul>
+          <h4>Key Moving Average Periods</h4>
+          <ul>
+            <li><strong>20 EMA/SMA:</strong> Short-term trend. Day traders and swing traders watch this closely. Price above 20 EMA = short-term uptrend.</li>
+            <li><strong>50 SMA:</strong> Medium-term trend. Key institutional level. Many stocks find support/resistance here.</li>
+            <li><strong>200 SMA:</strong> The most important long-term trend indicator. Price above 200 SMA = long-term uptrend. Price below = long-term downtrend. The entire market watches this level.</li>
+          </ul>
+          <h4>Crossover Signals</h4>
+          <ul>
+            <li><strong>Golden Cross:</strong> 50 SMA crosses above 200 SMA. Bullish signal. Historically followed by strong rallies.</li>
+            <li><strong>Death Cross:</strong> 50 SMA crosses below 200 SMA. Bearish signal. Often precedes further weakness (but is a lagging indicator — price may already be recovering by the time it forms).</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-4-5" onclick="toggleLesson('4-5')"><div class="lesson-num">5</div><div class="lesson-title">RSI — Relative Strength Index</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-4-5"><div class="lesson-text">
+          <p>The <strong>RSI</strong> is a momentum oscillator that measures the speed and magnitude of price changes. It oscillates between 0 and 100. Developed by J. Welles Wilder. Default period: 14.</p>
+          <ul>
+            <li><strong>Overbought (&gt;70):</strong> The asset has risen rapidly. Potential for pullback. Does NOT mean "sell immediately" — strong trends can stay overbought for extended periods.</li>
+            <li><strong>Oversold (&lt;30):</strong> The asset has fallen rapidly. Potential for bounce. Does NOT mean "buy immediately."</li>
+            <li><strong>Centerline (50):</strong> Above 50 = bullish momentum; below 50 = bearish momentum.</li>
+          </ul>
+          <h4>RSI Divergence (Most Powerful Use)</h4>
+          <ul>
+            <li><strong>Bearish Divergence:</strong> Price makes a higher high but RSI makes a lower high. Momentum is weakening despite price rising. Often precedes a reversal.</li>
+            <li><strong>Bullish Divergence:</strong> Price makes a lower low but RSI makes a higher low. Selling pressure is exhausting. Often precedes a bounce.</li>
+          </ul>
+          <div class="callout tip"><strong>Best Combined With:</strong> Use RSI divergence at major support/resistance levels for high-probability setups. RSI alone is weak — always combine with price action context.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-4-6" onclick="toggleLesson('4-6')"><div class="lesson-num">6</div><div class="lesson-title">MACD &amp; Bollinger Bands</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-4-6"><div class="lesson-text">
+          <h4>MACD (Moving Average Convergence Divergence)</h4>
+          <p>MACD is a trend-following momentum indicator. It consists of three components:</p>
+          <ul>
+            <li><strong>MACD Line:</strong> 12-period EMA minus 26-period EMA.</li>
+            <li><strong>Signal Line:</strong> 9-period EMA of the MACD line.</li>
+            <li><strong>Histogram:</strong> The difference between MACD and Signal lines. Growing bars = increasing momentum.</li>
+          </ul>
+          <p><strong>Signals:</strong> Bullish crossover = MACD crosses above Signal line. Bearish = crosses below. MACD crossing above zero = bullish shift in trend.</p>
+          <h4>Bollinger Bands</h4>
+          <p>Bollinger Bands consist of a 20-period SMA (middle band) with upper and lower bands set 2 standard deviations away. They dynamically expand during high volatility and contract during low volatility.</p>
+          <ul>
+            <li><strong>Band Touch:</strong> Price touching the upper band = overbought relative to recent range. Lower band = oversold.</li>
+            <li><strong>Bollinger Squeeze:</strong> Bands contract tightly = low volatility period preceding a large move. When the squeeze resolves (bands expand), a significant directional move is likely.</li>
+            <li><strong>%B Indicator:</strong> Shows where price is relative to the bands. Above 1 = above upper band; below 0 = below lower band.</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-4-7" onclick="toggleLesson('4-7')"><div class="lesson-num">7</div><div class="lesson-title">Volume Analysis &amp; Chart Patterns</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-4-7"><div class="lesson-text">
+          <h4>Volume-Based Indicators</h4>
+          <ul>
+            <li><strong>OBV (On-Balance Volume):</strong> Running total of volume. Rising OBV on rising price = institutional accumulation.</li>
+            <li><strong>VWAP (Volume Weighted Average Price):</strong> Average price weighted by volume throughout the day. Institutions use this as a benchmark. Day traders use it as intraday support/resistance.</li>
+            <li><strong>Volume Profile:</strong> Shows which price levels had the most trading activity. High-volume nodes = strong support/resistance.</li>
+          </ul>
+          <h4>Classic Chart Patterns</h4>
+          <ul>
+            <li><strong>Head and Shoulders:</strong> Bearish reversal. Three peaks — middle (head) is highest. Neckline break = confirmation of reversal.</li>
+            <li><strong>Double Top/Bottom:</strong> Two attempts to break a level that fail. Double top = bearish. Double bottom = bullish.</li>
+            <li><strong>Cup and Handle:</strong> Bullish continuation. Rounded bottom (cup) followed by a small consolidation (handle). Breakout above handle = entry.</li>
+            <li><strong>Bull/Bear Flag:</strong> Strong directional move (flag pole) followed by tight consolidation (flag). Breakout in direction of prior move = continuation.</li>
+            <li><strong>Triangle (Ascending/Descending/Symmetrical):</strong> Compression patterns. Ascending = higher lows + flat resistance = bullish. Descending = lower highs + flat support = bearish.</li>
+          </ul>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODULE 5 ── -->
+<div class="module-block" id="mod-m5">
+  <div class="module-header" id="mh-m5" onclick="toggleModule('m5')">
+    <div class="module-icon mod-yellow"><i data-lucide="pie-chart" class="icon"></i></div>
+    <div class="module-info"><div class="module-title">Module 5 — Fundamental Analysis</div><div class="module-meta">5 lessons · How to value companies and read macro events</div></div>
+    <div class="module-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div>
+  </div>
+  <div class="module-body" id="mb-m5">
+    <div class="module-content">
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-5-1" onclick="toggleLesson('5-1')"><div class="lesson-num">1</div><div class="lesson-title">What Is Fundamental Analysis?</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-5-1"><div class="lesson-text">
+          <p><strong>Fundamental analysis</strong> evaluates a security by examining the underlying business — its financial health, growth prospects, competitive position, and intrinsic value. The goal is to determine whether a stock is over- or under-valued relative to its actual worth.</p>
+          <p>Where technical analysis asks "Where is price going based on chart patterns?", fundamental analysis asks "What is this company actually worth, and is the current stock price above or below that value?"</p>
+          <h4>Top-Down vs Bottom-Up</h4>
+          <ul>
+            <li><strong>Top-Down:</strong> Start with macroeconomics → industry/sector → individual company.</li>
+            <li><strong>Bottom-Up:</strong> Start with an individual company's financials, regardless of the broader economy.</li>
+          </ul>
+          <h4>The Three Financial Statements</h4>
+          <ul>
+            <li><strong>Income Statement:</strong> Revenue, expenses, and profit over a period. Shows profitability.</li>
+            <li><strong>Balance Sheet:</strong> Assets, liabilities, and shareholders' equity at a point in time. Shows financial health.</li>
+            <li><strong>Cash Flow Statement:</strong> Cash in and out of the business. Operating cash flow is especially important — it shows whether the business actually generates real cash.</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-5-2" onclick="toggleLesson('5-2')"><div class="lesson-num">2</div><div class="lesson-title">Key Financial Ratios</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-5-2"><div class="lesson-text">
+          <h4>Valuation Ratios</h4>
+          <ul>
+            <li><strong>P/E (Price-to-Earnings):</strong> Stock price ÷ EPS. How much investors pay per $1 of earnings. S&amp;P 500 average: ~20–25x. Tech companies often trade at 30–50x+ if high-growth.</li>
+            <li><strong>Forward P/E:</strong> Uses next year's estimated earnings. More useful for growing companies.</li>
+            <li><strong>PEG Ratio:</strong> P/E ÷ Earnings Growth Rate. Accounts for growth. PEG &lt;1 is theoretically undervalued.</li>
+            <li><strong>P/S (Price-to-Sales):</strong> Useful for unprofitable companies. Revenue still being generated even without profit.</li>
+            <li><strong>P/B (Price-to-Book):</strong> Compares market value to book value (net assets). Common in banking/financial sector valuation.</li>
+            <li><strong>EV/EBITDA:</strong> Enterprise Value to EBITDA. Used in M&amp;A analysis. Better than P/E for comparing companies with different debt levels.</li>
+          </ul>
+          <h4>Profitability Ratios</h4>
+          <ul>
+            <li><strong>Gross Margin:</strong> (Revenue − COGS) ÷ Revenue. How much profit per dollar of revenue before overhead.</li>
+            <li><strong>Operating Margin:</strong> Operating income ÷ Revenue. Efficiency after operating expenses.</li>
+            <li><strong>Net Margin:</strong> Net income ÷ Revenue. Bottom-line profitability.</li>
+            <li><strong>ROE (Return on Equity):</strong> Net income ÷ Shareholders' equity. How efficiently management uses equity to generate profit.</li>
+            <li><strong>Free Cash Flow (FCF):</strong> Operating cash flow minus capital expenditures. The real cash generated after maintaining/growing the business. Often more reliable than EPS.</li>
+          </ul>
+          <h4>Financial Health Ratios</h4>
+          <ul>
+            <li><strong>Debt-to-Equity:</strong> Total debt ÷ equity. Higher = more leveraged. Context matters — capital-intensive industries carry more debt normally.</li>
+            <li><strong>Current Ratio:</strong> Current assets ÷ current liabilities. &gt;1 means company can cover short-term obligations. &lt;1 is a warning sign.</li>
+          </ul>
+          <div class="callout tip"><strong>Where to Find This Data</strong>Free sources: Yahoo Finance (financials tab), Macrotrends.net, Wisesheets, SEC EDGAR (official filings). Paid: Bloomberg Terminal, FactSet, Koyfin.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-5-3" onclick="toggleLesson('5-3')"><div class="lesson-num">3</div><div class="lesson-title">Earnings Reports</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-5-3"><div class="lesson-text">
+          <p>Every public company reports financial results quarterly (Q1–Q4) and annually. <strong>Earnings season</strong> occurs approximately 3–5 weeks after each quarter ends. It's one of the most volatile and opportunity-rich times in markets.</p>
+          <h4>What to Watch in an Earnings Report</h4>
+          <ul>
+            <li><strong>EPS (Earnings Per Share):</strong> Net income ÷ shares outstanding. The headline number. "Beat" = actual EPS &gt; analyst estimate. "Miss" = actual EPS &lt; estimate.</li>
+            <li><strong>Revenue:</strong> Did the company grow its top line? Revenue beats on heavy growth are bullish.</li>
+            <li><strong>Guidance:</strong> Often more important than the actual results. If a company beats but lowers future guidance, the stock usually falls. "Beat and raise" is the ideal outcome.</li>
+            <li><strong>Margins:</strong> Is the company expanding or contracting its margins? Contracting margins despite revenue growth is a red flag.</li>
+            <li><strong>Conference Call:</strong> Management's tone and commentary on forward-looking factors often moves the stock more than the numbers.</li>
+          </ul>
+          <h4>Trading Around Earnings</h4>
+          <ul>
+            <li>Options implied volatility inflates before earnings → IV crush after release deflates premiums.</li>
+            <li>Stocks can move 5–25%+ after earnings. Historical move expectations can be found on options chains.</li>
+            <li>The "buy the rumor, sell the news" effect is real — sometimes great earnings still cause sell-offs.</li>
+          </ul>
+          <div class="callout warning"><strong>Earnings Risk</strong>Holding options or highly leveraged positions through earnings is extremely risky even for experienced traders. IV crush alone can turn a correct directional call into a loss.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-5-4" onclick="toggleLesson('5-4')"><div class="lesson-num">4</div><div class="lesson-title">Macroeconomic Events &amp; Indicators</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-5-4"><div class="lesson-text">
+          <h4>Federal Reserve (FOMC)</h4>
+          <p>The Federal Open Market Committee meets 8 times per year to set the federal funds rate. This single decision affects everything: mortgage rates, bond yields, stock valuations, the dollar, gold, and emerging markets. When the Fed raises rates, growth stocks and bonds typically fall. When it cuts, they rally.</p>
+          <ul>
+            <li><strong>Dot Plot:</strong> Quarterly projection of where FOMC members expect rates to be. Markets move significantly on changes.</li>
+            <li><strong>Jerome Powell Speeches:</strong> The Fed chair's press conferences and speeches at events like Jackson Hole move markets substantially.</li>
+          </ul>
+          <h4>Key Economic Reports (US)</h4>
+          <ul>
+            <li><strong>CPI (Consumer Price Index):</strong> Monthly inflation data. Higher-than-expected CPI → Fed may raise rates → stocks/bonds fall. Released around the 10th–13th of each month.</li>
+            <li><strong>PCE (Personal Consumption Expenditures):</strong> The Fed's preferred inflation measure. Released monthly.</li>
+            <li><strong>NFP (Non-Farm Payrolls):</strong> Monthly jobs report (first Friday of the month). Massive market mover. Strong jobs = Fed stays hawkish. Weak jobs = dovish pivot expected.</li>
+            <li><strong>GDP (Gross Domestic Product):</strong> Quarterly. Two consecutive negative quarters = recession. Advance estimate vs. revised can cause market moves.</li>
+            <li><strong>PMI (Purchasing Managers Index):</strong> Monthly survey of manufacturing and services activity. Above 50 = expansion; below 50 = contraction. ISM Manufacturing and Services PMI.</li>
+            <li><strong>Retail Sales:</strong> Monthly consumer spending data. Strong retail sales = healthy consumer = bullish for economy.</li>
+          </ul>
+          <div class="callout info"><strong>Economic Calendar</strong>Always check the economic calendar before trading. An unexpected CPI print at 8:30am ET can instantly gap your position against you before you can react. Sites: Investing.com, Forex Factory, Bloomberg Economic Calendar.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-5-5" onclick="toggleLesson('5-5')"><div class="lesson-num">5</div><div class="lesson-title">Sectors &amp; Industry Analysis</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-5-5"><div class="lesson-text">
+          <p>The S&amp;P 500 is divided into <strong>11 GICS sectors</strong>. Understanding sector rotation — how money moves between sectors during different economic cycles — is critical for anticipating which industries will outperform.</p>
+          <h4>The 11 GICS Sectors</h4>
+          <ul>
+            <li><strong>Technology (XLK):</strong> Benefits from low interest rates. Growth-oriented. AAPL, MSFT, NVDA.</li>
+            <li><strong>Healthcare (XLV):</strong> Defensive — people need healthcare regardless of economy. JNJ, UNH, PFE.</li>
+            <li><strong>Financials (XLF):</strong> Banks benefit from rising interest rates (wider net interest margins). JPM, BAC, BRK.</li>
+            <li><strong>Consumer Discretionary (XLY):</strong> Cyclical — grows when consumers have money. AMZN, TSLA, MCD.</li>
+            <li><strong>Consumer Staples (XLP):</strong> Defensive — food, beverages, household products. Safe in recessions. KO, PG, WMT.</li>
+            <li><strong>Energy (XLE):</strong> Correlated to oil prices. XOM, CVX, SLB.</li>
+            <li><strong>Utilities (XLU):</strong> Defensive, bond-like. Hurt by rising rates. NEE, DUK.</li>
+            <li><strong>Real Estate (XLRE):</strong> REITs. Sensitive to interest rates. Hurt when rates rise.</li>
+            <li><strong>Materials (XLB):</strong> Mining, chemicals, paper. Cyclical — grows with global manufacturing.</li>
+            <li><strong>Industrials (XLI):</strong> Manufacturing, transportation, defense. HON, CAT, BA.</li>
+            <li><strong>Communication Services (XLC):</strong> Media, telecom, internet. META, GOOGL, NFLX.</li>
+          </ul>
+          <div class="callout tip"><strong>Sector Rotation</strong>Early recovery → Financials, Industrials. Mid-cycle → Technology, Consumer Discretionary. Late cycle → Energy, Materials. Recession → Consumer Staples, Healthcare, Utilities. This isn't perfect but it's a useful mental model.</div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODULE 6 ── -->
+<div class="module-block" id="mod-m6">
+  <div class="module-header" id="mh-m6" onclick="toggleModule('m6')">
+    <div class="module-icon mod-red"><i data-lucide="shield" class="icon"></i></div>
+    <div class="module-info"><div class="module-title">Module 6 — Risk Management</div><div class="module-meta">5 lessons · The most important module. Most beginners skip this.</div></div>
+    <div class="module-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div>
+  </div>
+  <div class="module-body" id="mb-m6">
+    <div class="module-content">
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-6-1" onclick="toggleLesson('6-1')"><div class="lesson-num">1</div><div class="lesson-title">Why Risk Management Is #1</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-6-1"><div class="lesson-text">
+          <p>Professional traders don't focus on making money — they focus on <em>not losing money</em>. Every professional will tell you that preserving capital is the primary objective. Profits are a byproduct of avoiding catastrophic losses.</p>
+          <p>The math of drawdowns is brutal and asymmetric:</p>
+          <div class="table-wrap table-inline">
+            <table class="data-table">
+              <thead><tr><th>Account Loss</th><th>Gain Required to Break Even</th></tr></thead>
+              <tbody>
+                <tr><td>10%</td><td>11.1%</td></tr>
+                <tr><td>25%</td><td>33.3%</td></tr>
+                <tr><td>50%</td><td>100%</td></tr>
+                <tr><td>75%</td><td>300%</td></tr>
+                <tr><td>90%</td><td>900%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>This is why a single catastrophic loss is often unrecoverable for beginner traders. Protecting capital is a priority above all else.</p>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-6-2" onclick="toggleLesson('6-2')"><div class="lesson-num">2</div><div class="lesson-title">Position Sizing</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-6-2"><div class="lesson-text">
+          <p><strong>Position sizing</strong> is determining how many shares/contracts to buy based on how much you're willing to risk. It's the most direct mechanism for controlling risk.</p>
+          <h4>The 1-2% Rule</h4>
+          <p>Never risk more than 1–2% of your total trading account on a single trade. If you have a $10,000 account, your maximum risk per trade is $100–$200. This rule means you can survive 50–100 consecutive losses before running out of capital — giving you time to learn and improve.</p>
+          <h4>Calculating Position Size</h4>
+          <ol>
+            <li>Determine your account risk: 1% of $10,000 = $100</li>
+            <li>Identify your stop loss distance: You'll stop out if stock drops $5 from entry</li>
+            <li>Position size = Risk ÷ Stop Distance = $100 ÷ $5 = 20 shares</li>
+          </ol>
+          <div class="callout example"><strong>Example</strong>Account: $25,000 | Risk per trade: 1% = $250 | Stock entry: $100 | Stop loss: $95 (5% below entry). Position size = $250 ÷ $5 = 50 shares = $5,000 total position. That's only 20% of your account in one trade, with maximum loss capped at $250.</div>
+          <div class="callout tip"><strong>Key Principle</strong>Position size is determined by your RISK, not by how confident you feel. Even your highest-conviction trade should follow the same sizing rules.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-6-3" onclick="toggleLesson('6-3')"><div class="lesson-num">3</div><div class="lesson-title">Stop Losses</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-6-3"><div class="lesson-text">
+          <p>A <strong>stop loss</strong> is a predetermined price at which you will exit a losing trade to prevent further damage. It is not optional — it is the mechanism that saves your account when your trade is wrong.</p>
+          <h4>Types of Stop Losses</h4>
+          <ul>
+            <li><strong>Hard Stop:</strong> An actual stop-loss order placed with your broker. The most disciplined approach. Executes automatically.</li>
+            <li><strong>Mental Stop:</strong> A price level you commit to exiting at manually. Higher risk — emotional overrides happen constantly. Not recommended for beginners.</li>
+            <li><strong>ATR-Based Stop:</strong> Place stop at 1–2× ATR below entry. Gives the trade room to breathe based on the asset's natural volatility range.</li>
+            <li><strong>Structure-Based Stop:</strong> Place stop just below the most recent swing low (for longs) or above recent swing high (for shorts). The level that, if broken, invalidates your trade thesis.</li>
+            <li><strong>Percentage Stop:</strong> Exit if stock falls X% from entry. Simple but doesn't account for volatility structure.</li>
+          </ul>
+          <div class="callout warning"><strong>Never Move Your Stop Loss Further Away</strong>The single most dangerous habit a beginner can develop is moving a stop loss when price approaches it. This converts a controlled small loss into a catastrophic account-damaging loss.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-6-4" onclick="toggleLesson('6-4')"><div class="lesson-num">4</div><div class="lesson-title">Risk/Reward Ratio &amp; Take Profits</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-6-4"><div class="lesson-text">
+          <p>The <strong>Risk/Reward Ratio (R:R)</strong> compares how much you risk on a trade to how much you aim to make. A trade with a 1:3 R:R risks $1 to potentially make $3.</p>
+          <h4>Why R:R Is Critical</h4>
+          <p>Your win rate and R:R ratio together determine your long-term profitability:</p>
+          <ul>
+            <li>Win rate 50% with 1:1 R:R = breakeven (before fees)</li>
+            <li>Win rate 50% with 1:2 R:R = profitable even losing half your trades</li>
+            <li>Win rate 33% with 1:2 R:R = still profitable</li>
+            <li>Win rate 25% with 1:3 R:R = still profitable</li>
+          </ul>
+          <h4>Setting Take Profit Targets</h4>
+          <ul>
+            <li>Next major resistance level on the chart</li>
+            <li>Fibonacci extension levels (127.2%, 161.8%)</li>
+            <li>Round numbers (psychological levels)</li>
+            <li>2× or 3× the distance of your stop loss from entry</li>
+          </ul>
+          <h4>Scaling Out</h4>
+          <p>Professional traders often take partial profits at the first target (e.g., close 50% of position), then move stop loss to breakeven for the remaining position. This "free trade" approach removes emotional pressure.</p>
+          <div class="callout tip"><strong>Minimum Requirement</strong>Only take trades with at least a 1:2 R:R ratio. This means even with a 50% win rate, you're profitable.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-6-5" onclick="toggleLesson('6-5')"><div class="lesson-num">5</div><div class="lesson-title">Portfolio Diversification &amp; Drawdowns</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-6-5"><div class="lesson-text">
+          <h4>Diversification</h4>
+          <p>Don't put all your capital in one stock, sector, or asset class. Diversification reduces your portfolio's exposure to any single catastrophic event.</p>
+          <ul>
+            <li>Across asset classes: stocks, bonds, commodities, cash</li>
+            <li>Across sectors: don't load up on only tech or only energy</li>
+            <li>Across geographies: US, international, emerging markets</li>
+            <li>Across time: dollar-cost averaging (regular fixed investments) removes market timing risk</li>
+          </ul>
+          <h4>Correlation Risk</h4>
+          <p>During market crashes, correlations rise toward 1.0 — everything falls together. "Diversification" in stocks alone often fails in severe downturns. True diversification includes uncorrelated assets like gold, bonds, or cash.</p>
+          <h4>Managing a Drawdown</h4>
+          <ul>
+            <li>If you lose 10% of your account, reduce position sizes by 50% until you recover</li>
+            <li>Never add to losing positions to "average down" without a clear plan</li>
+            <li>Take a break — the market will be there tomorrow. Revenge trading amplifies losses.</li>
+          </ul>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODULE 7 ── -->
+<div class="module-block" id="mod-m7">
+  <div class="module-header" id="mh-m7" onclick="toggleModule('m7')">
+    <div class="module-icon mod-teal"><i data-lucide="brain" class="icon"></i></div>
+    <div class="module-info"><div class="module-title">Module 7 — Trading Psychology</div><div class="module-meta">5 lessons · The mental game of trading</div></div>
+    <div class="module-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div>
+  </div>
+  <div class="module-body" id="mb-m7">
+    <div class="module-content">
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-7-1" onclick="toggleLesson('7-1')"><div class="lesson-num">1</div><div class="lesson-title">Why Psychology Dominates</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-7-1"><div class="lesson-text">
+          <p>Technical and fundamental knowledge account for perhaps 20% of trading success. The remaining 80% is psychology — the ability to execute your plan without letting emotions override your rules. You can have a perfect strategy and still fail because of psychological failure in execution.</p>
+          <p>Markets are designed to extract money from emotional participants. Every price action move is the result of collective human psychology — fear and greed at scale. Understanding your own psychology is understanding markets themselves.</p>
+          <div class="callout info"><strong>Key Research</strong>Studies of retail brokerage data consistently show that traders who trade more frequently underperform those who trade less. Overconfidence, overtrading, and emotional reactions are the primary drivers of retail underperformance.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-7-2" onclick="toggleLesson('7-2')"><div class="lesson-num">2</div><div class="lesson-title">Fear, Greed &amp; FOMO</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-7-2"><div class="lesson-text">
+          <ul>
+            <li><strong>FOMO (Fear of Missing Out):</strong> Chasing a stock after it has already moved significantly. You buy at the top, driven by seeing others profit. The move is often over by the time FOMO kicks in. Wait for the next pullback or find a different setup.</li>
+            <li><strong>Loss Aversion:</strong> Humans feel losses roughly twice as intensely as equivalent gains. This causes: holding losing positions too long (hoping they recover) and selling winning positions too early (fear of giving back gains). Both patterns are deeply destructive.</li>
+            <li><strong>Recency Bias:</strong> Overweighting recent events. After a market crash, assuming crashes will continue. After a bull run, assuming it continues forever.</li>
+            <li><strong>Overconfidence:</strong> After a few winning trades, beginners often increase position sizes dramatically. A single bad trade then eliminates weeks of gains.</li>
+            <li><strong>Confirmation Bias:</strong> Seeking information that confirms your existing trade thesis while ignoring contradicting data.</li>
+          </ul>
+          <div class="callout tip"><strong>The Cure</strong>Rules. Write down your trade criteria, entry, stop, and target before entering. Execute mechanically. Review afterward. The plan eliminates in-the-moment emotional decisions.</div>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-7-3" onclick="toggleLesson('7-3')"><div class="lesson-num">3</div><div class="lesson-title">Revenge Trading &amp; Overtrading</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-7-3"><div class="lesson-text">
+          <p><strong>Revenge trading</strong> is the act of immediately re-entering the market after a loss in an emotional attempt to "win back" what was lost. It almost always results in larger losses because the decision is driven by emotion, not analysis. Recognize the urge to revenge trade — and treat it as a signal to stop for the day.</p>
+          <p><strong>Overtrading</strong> is taking too many trades — often driven by boredom, adrenaline, or the belief that more trades = more money. In reality, professional traders are highly selective. Many take only a handful of high-conviction setups per week. Commissions, spreads, and tax drag from frequent trading erode returns significantly.</p>
+          <h4>The "One Good Trade" Approach</h4>
+          <p>Set a daily stop-loss rule (e.g., if you lose more than 1% of your account in a day, you stop trading for the day). This prevents turning a bad morning into a catastrophic day.</p>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-7-4" onclick="toggleLesson('7-4')"><div class="lesson-num">4</div><div class="lesson-title">Building a Trading Plan</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-7-4"><div class="lesson-text">
+          <p>A <strong>trading plan</strong> is your personal rulebook. Trading without a plan is gambling. Your plan should answer every key question before you're in a trade and emotionally compromised.</p>
+          <h4>What a Trading Plan Covers</h4>
+          <ul>
+            <li><strong>Markets Traded:</strong> Which assets? Which timeframes? You can't master everything — specialize.</li>
+            <li><strong>Entry Criteria:</strong> Specific, objective conditions that must be met before entering a trade. "The stock looks good" is not criteria.</li>
+            <li><strong>Exit Rules:</strong> Where exactly is your stop loss? Where is your first take-profit target? What triggers an early exit?</li>
+            <li><strong>Position Sizing:</strong> Maximum risk per trade (1-2%). Maximum portfolio exposure at once (no more than 25–50% deployed at once as a beginner).</li>
+            <li><strong>Daily Loss Limit:</strong> The maximum you'll lose in a day before stopping.</li>
+            <li><strong>Times to Trade:</strong> When are you NOT allowed to trade? (Before major news, the first 15 minutes of market open for beginners, when emotionally compromised).</li>
+            <li><strong>Review Process:</strong> How often do you review your trades? What do you look for?</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-header" id="lh-7-5" onclick="toggleLesson('7-5')"><div class="lesson-num">5</div><div class="lesson-title">Trading Journal</div><div class="lesson-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div></div>
+        <div class="lesson-body" id="lb-7-5"><div class="lesson-text">
+          <p>A <strong>trading journal</strong> is the most under-used and most valuable tool available to a developing trader. Without data on your own performance, you're flying blind.</p>
+          <h4>What to Record</h4>
+          <ul>
+            <li>Date, asset, direction (long/short)</li>
+            <li>Entry price, stop loss, target(s)</li>
+            <li>Reason for the trade (setup description)</li>
+            <li>Exit price, actual result, P&amp;L</li>
+            <li>Emotions during the trade (nervous, confident, impatient?)</li>
+            <li>Post-trade notes: Did you follow your plan? What would you do differently?</li>
+          </ul>
+          <h4>What to Analyze Monthly</h4>
+          <ul>
+            <li>Win rate by setup type — which setups actually work for you?</li>
+            <li>Average win vs. average loss — are you cutting losses and letting winners run?</li>
+            <li>Time of day — do you perform better in the morning or afternoon?</li>
+            <li>Day of week — some traders have consistent patterns.</li>
+          </ul>
+          <div class="callout tip"><strong>Tools</strong>Tradervue, TradeZella, Edgewonk, or simply a Google Sheet. The tool matters less than the discipline of actually logging every trade.</div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODULE 8 ── -->
+<div class="module-block" id="mod-m8">
+  <div class="module-header" id="mh-m8" onclick="toggleModule('m8')">
+    <div class="module-icon mod-pink"><i data-lucide="alert-octagon" class="icon"></i></div>
+    <div class="module-info"><div class="module-title">Module 8 — Common Beginner Mistakes</div><div class="module-meta">15 critical mistakes to avoid from day one</div></div>
+    <div class="module-chevron"><i data-lucide="chevron-down" class="icon icon-sm"></i></div>
+  </div>
+  <div class="module-body" id="mb-m8">
+    <div class="module-content">
+      <p class="mistakes-intro">These mistakes cost beginners enormous amounts of money. Read each one carefully — recognizing the pattern in yourself is the first step to avoiding it.</p>
+
+      <div class="mistakes-list">
+        <div class="mistake-card"><span class="mistake-num">01</span><div><strong class="mistake-title">Trading Without a Plan</strong><p class="mistake-desc">Entering trades based on feelings, tips, or headlines without specific entry, stop, and target criteria. Every trade should be planned before execution.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">02</span><div><strong class="mistake-title">Not Using Stop Losses</strong><p class="mistake-desc">"I'll just wait for it to come back" is one of the most expensive sentences in trading. Small losses become account-destroying losses without stops.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">03</span><div><strong class="mistake-title">Risking Too Much Per Trade</strong><p class="mistake-desc">Putting 25–50%+ of the account in a single trade. A few consecutive bad trades can wipe out months of gains. Use the 1-2% risk rule.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">04</span><div><strong class="mistake-title">Chasing Momentum (FOMO Buying)</strong><p class="mistake-desc">Buying after a stock has already surged because you're afraid of missing out. You're usually buying at or near the top, from people who entered earlier and are now selling to you.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">05</span><div><strong class="mistake-title">Using Leverage Before Mastering Basics</strong><p class="mistake-desc">Margin and leveraged products amplify losses as efficiently as gains. Beginners using 4:1 margin on highly volatile stocks have blown accounts in single sessions.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">06</span><div><strong class="mistake-title">Averaging Down Without a Plan</strong><p class="mistake-desc">Buying more of a losing position to lower your average cost — then watching it continue lower. "Throwing good money after bad." Only average down if you had a pre-planned scaling strategy.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">07</span><div><strong class="mistake-title">Ignoring the Broader Market</strong><p class="mistake-desc">Individual stocks are strongly correlated to the broader market. Trying to buy individual stocks during a broad market selloff is fighting a strong headwind. Check SPY and QQQ first.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">08</span><div><strong class="mistake-title">Taking Tips from Social Media</strong><p class="mistake-desc">Reddit, Twitter, TikTok, and Discord are full of people promoting stocks they already own (and will dump on you) or simply making things up. Always do your own research.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">09</span><div><strong class="mistake-title">Holding Options Through Earnings</strong><p class="mistake-desc">IV crush after earnings announcements can turn a correct directional call into a loss. If you must trade earnings, use defined-risk spreads or be prepared to lose the entire premium.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">10</span><div><strong class="mistake-title">Overtrading — Looking for Action</strong><p class="mistake-desc">Trading is not a video game. Sometimes the best trade is no trade. Forcing trades when no clear setup exists leads to death by a thousand small losses.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">11</span><div><strong class="mistake-title">Skipping Paper Trading</strong><p class="mistake-desc">Paper trading (simulated trading with fake money) is how you test strategies without risking real capital. Most experienced traders recommend 3–6 months of profitable paper trading before going live.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">12</span><div><strong class="mistake-title">Treating Trading as a Get-Rich-Quick Scheme</strong><p class="mistake-desc">Consistent profitability typically takes 2–5 years of dedicated learning and practice. Traders who approach it looking for fast money usually blow their accounts within months.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">13</span><div><strong class="mistake-title">Not Keeping a Trading Journal</strong><p class="mistake-desc">Without reviewing your trades, you'll repeat the same mistakes indefinitely. The journal is the only way to identify your actual patterns — what works, what doesn't, and when you're at your worst.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">14</span><div><strong class="mistake-title">Trading Illiquid or Penny Stocks</strong><p class="mistake-desc">Penny stocks have wide spreads, thin liquidity, and are frequently the target of pump-and-dump schemes. The people promoting them on social media are almost always already positioned and waiting to sell.</p></div></div>
+        <div class="mistake-card"><span class="mistake-num">15</span><div><strong class="mistake-title">Paying for "Signals" or Subscription Services</strong><p class="mistake-desc">If someone genuinely had a reliable edge in markets, they would use it to trade — not sell it for $97/month. Most signal sellers and trading gurus earn money from subscriptions, not trading. Be highly skeptical.</p></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        </div><!-- /edu modules -->
+      </div><!-- /edu-layout -->
+    </div><!-- /section-education -->
+
+
+    <!-- ═══════════════════════════════════════
+         RESEARCH TOOLS
+    ═══════════════════════════════════════ -->
+    <div id="section-research" class="section">
+      <div class="section-intro">
+        <div class="eyebrow">Research &amp; Analysis</div>
+        <h2>Research Tools</h2>
+        <p>How to analyze a trade, build your watchlist, use economic data, and understand market-moving news.</p>
+      </div>
+
+      <!-- How to Research a Trade -->
+      <div class="section-intro sub-intro">
+        <div class="eyebrow">Step-by-Step</div>
+        <h2 class="h3">How to Research a Trade</h2>
+      </div>
+      <div class="research-steps-wrap">
+        <div class="research-step">
+          <div class="step-num">1</div>
+          <div class="step-body"><h3>Assess the Macro Environment</h3><p>Before analyzing any individual stock, check the big picture. Is the S&P 500 in an uptrend or downtrend? Is the Fed tightening or easing? What's the VIX level? A strong individual setup has less chance of working against a hostile macro backdrop.</p>
+          <ul><li>Check SPY, QQQ, IWM on daily and weekly charts</li><li>Check current VIX level</li><li>Know if any major economic data or Fed events are scheduled this week</li></ul></div>
+        </div>
+        <div class="research-step">
+          <div class="step-num">2</div>
+          <div class="step-body"><h3>Sector Strength Check</h3><p>Is the sector the stock is in showing relative strength or weakness vs the broader market? A strong stock in a weak sector faces more headwinds than a strong stock in a leading sector.</p>
+          <ul><li>Compare sector ETF (e.g., XLK for tech) against SPY</li><li>Use TradingView to overlay the sector ETF on SPY for visual comparison</li></ul></div>
+        </div>
+        <div class="research-step">
+          <div class="step-num">3</div>
+          <div class="step-body"><h3>Fundamental Screening</h3><p>Run basic fundamental checks to avoid structurally broken companies.</p>
+          <ul><li>Revenue trend: growing or shrinking?</li><li>EPS trend: accelerating or decelerating?</li><li>Debt level: manageable or excessive?</li><li>Any recent earnings beats? Next earnings date?</li><li>Analyst estimates: are upgrades or downgrades coming?</li></ul></div>
+        </div>
+        <div class="research-step">
+          <div class="step-num">4</div>
+          <div class="step-body"><h3>Technical Chart Analysis</h3><p>Identify the technical structure, key levels, and your trade setup.</p>
+          <ul><li>Check monthly → weekly → daily → 4H chart (top-down)</li><li>Identify trend direction on the daily chart</li><li>Mark key support and resistance levels</li><li>Look for your setup pattern (breakout, pullback to support, reversal signal)</li><li>Check volume confirmation</li><li>RSI, MACD, moving averages — are indicators aligned?</li></ul></div>
+        </div>
+        <div class="research-step">
+          <div class="step-num">5</div>
+          <div class="step-body"><h3>Plan the Trade (Before Entering)</h3><p>Write down before you enter: entry price, stop loss level, first target, second target, maximum risk in dollars, position size in shares.</p></div>
+        </div>
+        <div class="research-step">
+          <div class="step-num">6</div>
+          <div class="step-body"><h3>Check the News &amp; Catalyst</h3><p>Is there a reason for any recent price move? Is there upcoming news that could move the stock violently? Avoid initiating new positions right before binary events (earnings, FDA decisions, major economic data).</p></div>
+        </div>
+        <div class="research-step">
+          <div class="step-num">7</div>
+          <div class="step-body"><h3>Execute, Monitor, Record</h3><p>Enter at your planned price using a limit order. Place your stop loss immediately after entry. Record the trade in your journal. Let the trade work — don't watch it tick by tick.</p></div>
+        </div>
+      </div>
+
+      <!-- News Sources -->
+      <div class="section-intro sub-intro">
+        <div class="eyebrow">Information Sources</div>
+        <h2 class="h3">Where to Get Market News</h2>
+      </div>
+      <div class="grid grid-2 section-block">
+        <div class="news-source"><div class="news-icon"><i data-lucide="newspaper" class="icon"></i></div><div class="news-body"><h4>Bloomberg / Bloomberg Terminal</h4><p>The gold standard for financial news. Bloomberg.com is free for basics; the Terminal costs ~$24,000/year.</p></div><span class="news-type"><span class="pill pill-blue">Premium</span></span></div>
+        <div class="news-source"><div class="news-icon"><i data-lucide="bar-chart-3" class="icon"></i></div><div class="news-body"><h4>Reuters / AP Finance</h4><p>Wire services used by professional traders for breaking news with minimal spin.</p></div><span class="news-type"><span class="pill pill-green">Free</span></span></div>
+        <div class="news-source"><div class="news-icon"><i data-lucide="trending-up" class="icon"></i></div><div class="news-body"><h4>CNBC / Fox Business</h4><p>TV financial news — best for market open coverage. Take individual stock picks with skepticism.</p></div><span class="news-type"><span class="pill pill-green">Free</span></span></div>
+        <div class="news-source"><div class="news-icon"><i data-lucide="clipboard-list" class="icon"></i></div><div class="news-body"><h4>SEC EDGAR</h4><p>Official source for 10-K, 10-Q, 8-K, and proxy filings. Primary source — data before it goes anywhere else.</p></div><span class="news-type"><span class="pill pill-green">Free</span></span></div>
+        <div class="news-source"><div class="news-icon"><i data-lucide="trending-down" class="icon"></i></div><div class="news-body"><h4>Seeking Alpha / Motley Fool</h4><p>Analyst opinions and stock write-ups. Useful for ideas but heavily opinionated. Always verify independently.</p></div><span class="news-type"><span class="pill pill-yellow">Mixed</span></span></div>
+        <div class="news-source"><div class="news-icon"><i data-lucide="globe" class="icon"></i></div><div class="news-body"><h4>Investing.com / Forex Factory</h4><p>Best free economic calendars. Shows all scheduled data releases, their importance level, and previous/forecast values.</p></div><span class="news-type"><span class="pill pill-green">Free</span></span></div>
+      </div>
+
+      <!-- Building a Watchlist -->
+      <div class="section-intro sub-intro">
+        <div class="eyebrow">Watchlist</div>
+        <h2 class="h3">How to Build a Watchlist</h2>
+      </div>
+      <div class="card section-block">
+        <p class="card-desc">A watchlist is a curated list of assets you're actively monitoring for potential trade setups. A good watchlist is manageable (20–40 symbols), regularly updated, and organized by category or setup type.</p>
+        <div class="grid grid-2">
+          <div>
+            <h4 class="list-heading">What to Include</h4>
+            <ul class="spaced-list">
+              <li>Benchmark ETFs: SPY, QQQ, IWM — always</li>
+              <li>Sector leaders from 3–4 sectors you follow</li>
+              <li>Stocks approaching key technical levels</li>
+              <li>Stocks with upcoming catalysts (earnings, FDA decisions)</li>
+              <li>Stocks showing unusual volume or unusual options activity</li>
+              <li>Assets you want to paper trade before going live</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="list-heading">Screening Sources</h4>
+            <ul class="spaced-list">
+              <li>Finviz.com — powerful free stock screener</li>
+              <li>TradingView stock screener (above)</li>
+              <li>Unusual Whales / Market Chameleon — options flow</li>
+              <li>Barchart.com — momentum screeners</li>
+              <li>StockAnalysis.com — fundamental data</li>
+              <li>Earnings Whispers — upcoming earnings calendar</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Economic Calendar Widget -->
+      <div class="section-intro sub-intro">
+        <div class="eyebrow">Economic Calendar</div>
+        <h2 class="h3">Upcoming Market Events</h2>
+      </div>
+      <div class="tv-widget section-block">
+        <div class="tradingview-widget-container" style="height:400px">
+          <div class="tradingview-widget-container__widget" style="height:400px"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+          {"colorTheme":"dark","isTransparent":true,"width":"100%","height":"400","locale":"en","importanceFilter":"0,1","countryFilter":"us"}
+          </script>
+        </div>
+      </div>
+
+      <!-- Correlations -->
+      <div class="section-intro sub-intro">
+        <div class="eyebrow">Market Relationships</div>
+        <h2 class="h3">Key Asset Correlations</h2>
+      </div>
+      <div class="table-wrap section-block">
+        <table class="data-table">
+          <thead><tr><th>Asset A</th><th>Asset B</th><th>Relationship</th><th>Why It Matters</th></tr></thead>
+          <tbody>
+            <tr><td>Gold (GLD)</td><td>US Dollar (DXY)</td><td><span class="pill pill-red">Inverse ↔</span></td><td>Weak dollar = gold rises. Gold is priced in USD — when USD falls, gold costs more in other currencies, boosting global demand.</td></tr>
+            <tr><td>Gold (GLD)</td><td>Real Interest Rates</td><td><span class="pill pill-red">Inverse ↔</span></td><td>Gold pays no yield. When real rates rise, the opportunity cost of holding gold increases, pushing price down.</td></tr>
+            <tr><td>Crude Oil (USO)</td><td>Canadian Dollar (CAD)</td><td><span class="pill pill-green">Positive ↑↑</span></td><td>Canada is a major oil exporter. Rising oil prices improve Canada's trade balance and strengthen CAD.</td></tr>
+            <tr><td>S&P 500 (SPY)</td><td>VIX</td><td><span class="pill pill-red">Inverse ↔</span></td><td>VIX measures fear. When SPY falls sharply, VIX spikes. Classic panic indicator — VIX >40 often marks market bottoms.</td></tr>
+            <tr><td>Tech Stocks (QQQ)</td><td>Interest Rates (TLT)</td><td><span class="pill pill-red">Inverse ↔</span></td><td>Tech stocks are long-duration assets valued on future cash flows. Higher discount rates (rates) reduce present value of future earnings.</td></tr>
+            <tr><td>Bitcoin (BTC)</td><td>NASDAQ (QQQ)</td><td><span class="pill pill-green">Positive ↑↑</span></td><td>BTC has increasingly correlated with high-risk tech assets. Risk-off environments (rate hikes, recession fears) tend to hit both simultaneously.</td></tr>
+            <tr><td>Copper (HG)</td><td>Global GDP Growth</td><td><span class="pill pill-green">Positive ↑↑</span></td><td>"Dr. Copper" — used in construction, manufacturing, and electronics. Rising copper signals global economic expansion. Falling copper signals slowdown.</td></tr>
+            <tr><td>Bonds (TLT)</td><td>Stocks (SPY)</td><td><span class="pill pill-red">Inverse ↔</span></td><td>Historically, flight-to-safety during equity selloffs pushed bond prices up. Note: this relationship has broken down during periods of high inflation (2022).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /section-research -->
+
+    <!-- ═══════════════════════════════════════
+         GLOSSARY
+    ═══════════════════════════════════════ -->
+    <div id="section-glossary" class="section">
+      <div class="section-intro">
+        <div class="eyebrow">Reference</div>
+        <h2>Trading Glossary</h2>
+        <p>Every term you'll encounter as a beginner, clearly defined. Search or browse by letter.</p>
+      </div>
+
+      <div class="glossary-search">
+        <span><i data-lucide="search" class="icon icon-sm"></i></span>
+        <input type="text" id="glossary-search" placeholder="Search any trading term…"/>
+      </div>
+      <div class="glossary-alpha">
+        <button class="alpha-btn active" data-alpha="ALL" onclick="filterGlossary('ALL')">All</button>
+        <button class="alpha-btn" data-alpha="A" onclick="filterGlossary('A')">A</button>
+        <button class="alpha-btn" data-alpha="B" onclick="filterGlossary('B')">B</button>
+        <button class="alpha-btn" data-alpha="C" onclick="filterGlossary('C')">C</button>
+        <button class="alpha-btn" data-alpha="D" onclick="filterGlossary('D')">D</button>
+        <button class="alpha-btn" data-alpha="E" onclick="filterGlossary('E')">E</button>
+        <button class="alpha-btn" data-alpha="F" onclick="filterGlossary('F')">F</button>
+        <button class="alpha-btn" data-alpha="G" onclick="filterGlossary('G')">G</button>
+        <button class="alpha-btn" data-alpha="H" onclick="filterGlossary('H')">H</button>
+        <button class="alpha-btn" data-alpha="I" onclick="filterGlossary('I')">I</button>
+        <button class="alpha-btn" data-alpha="L" onclick="filterGlossary('L')">L</button>
+        <button class="alpha-btn" data-alpha="M" onclick="filterGlossary('M')">M</button>
+        <button class="alpha-btn" data-alpha="O" onclick="filterGlossary('O')">O</button>
+        <button class="alpha-btn" data-alpha="P" onclick="filterGlossary('P')">P</button>
+        <button class="alpha-btn" data-alpha="R" onclick="filterGlossary('R')">R</button>
+        <button class="alpha-btn" data-alpha="S" onclick="filterGlossary('S')">S</button>
+        <button class="alpha-btn" data-alpha="T" onclick="filterGlossary('T')">T</button>
+        <button class="alpha-btn" data-alpha="V" onclick="filterGlossary('V')">V</button>
+        <button class="alpha-btn" data-alpha="W" onclick="filterGlossary('W')">W</button>
+        <button class="alpha-btn" data-alpha="Y" onclick="filterGlossary('Y')">Y</button>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="A">
+        <div class="glossary-letter">A</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Alpha</h4><p>Return generated above a benchmark (e.g., S&P 500). Positive alpha = outperformance. Hard to achieve consistently — most professional managers fail to generate alpha over 10+ years.</p></div>
+          <div class="gterm"><h4>ATR (Average True Range)</h4><p>Measures average daily price range. Used for setting stop losses and position sizing. A stock with $5 ATR typically moves $5/day — place stops accordingly.</p></div>
+          <div class="gterm"><h4>Ask Price</h4><p>The lowest price a seller will accept for an asset. Also called the "offer." You buy at the ask price. The difference between bid and ask is the spread.</p></div>
+          <div class="gterm"><h4>Arbitrage</h4><p>Simultaneously buying and selling the same asset in different markets to profit from temporary price differences. Largely dominated by algorithmic HFT firms in modern markets.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="B">
+        <div class="glossary-letter">B</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Bear Market</h4><p>A market decline of 20% or more from recent highs, lasting at least two months. Characterized by pessimism, selling pressure, and often accompanied by economic slowdown.</p></div>
+          <div class="gterm"><h4>Beta</h4><p>Measures how much a stock moves relative to the broader market. Beta of 1.5 = moves 50% more than SPY. High beta = more volatile. Beta of -1 = moves inversely to market.</p></div>
+          <div class="gterm"><h4>Bid Price</h4><p>The highest price a buyer is willing to pay for an asset. You sell at the bid price. The market maker profits from the difference between bid and ask.</p></div>
+          <div class="gterm"><h4>Blue-Chip Stock</h4><p>Large, financially stable, well-established companies with a long track record. Considered safer than smaller companies. Examples: Apple, Microsoft, Johnson &amp; Johnson.</p></div>
+          <div class="gterm"><h4>Bollinger Bands</h4><p>A volatility indicator: 20-period SMA with upper and lower bands 2 standard deviations away. Price near upper band = overbought relative to recent range; near lower band = oversold.</p></div>
+          <div class="gterm"><h4>Bull Market</h4><p>A sustained market rise of 20% or more from recent lows. Characterized by optimism, rising prices, strong economic growth, and increasing investor confidence.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="C">
+        <div class="glossary-letter">C</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Call Option</h4><p>Gives the holder the right (not obligation) to buy 100 shares at the strike price before expiration. Profitable when the underlying stock rises above the strike price plus the premium paid.</p></div>
+          <div class="gterm"><h4>Candlestick</h4><p>A chart element showing open, high, low, and close for a period. Green/white body = closed higher than open. Red/black = closed lower. Wicks show high and low extremes.</p></div>
+          <div class="gterm"><h4>Capital Gains</h4><p>Profit from selling an asset for more than you paid. Short-term (&lt;1yr) taxed as ordinary income. Long-term (&gt;1yr) taxed at lower capital gains rates (0%, 15%, or 20% in the US).</p></div>
+          <div class="gterm"><h4>Circuit Breaker</h4><p>Automatic market pause triggered during extreme selling. S&P 500 falls 7% = 15-minute halt. Falls 13% = another 15-minute halt. Falls 20% = market closes for the day.</p></div>
+          <div class="gterm"><h4>Correction</h4><p>A market decline of 10–19.9% from a recent high. Healthy and normal — corrections happen roughly once per year on average. Not the same as a bear market (which requires 20%+).</p></div>
+          <div class="gterm"><h4>CPI (Consumer Price Index)</h4><p>The primary inflation gauge in the US. Measures changes in average prices of a basket of consumer goods. Released monthly — one of the most market-moving economic data points.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="D">
+        <div class="glossary-letter">D</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Day Trading</h4><p>Buying and selling securities within the same trading day, closing all positions before market close. Requires PDT minimum $25,000 for US traders. High risk, high stress.</p></div>
+          <div class="gterm"><h4>Death Cross</h4><p>When the 50-day SMA crosses below the 200-day SMA. Considered a bearish technical signal, though it's lagging — price often already recovered by the time it forms.</p></div>
+          <div class="gterm"><h4>Delta</h4><p>Options Greek measuring how much the option price changes per $1 move in the underlying. 0.50 delta option moves $0.50 per $1 move in the stock. Calls have positive delta, puts negative.</p></div>
+          <div class="gterm"><h4>Diversification</h4><p>Spreading investments across different assets, sectors, and geographies to reduce the impact of any single holding on total portfolio performance. "Don't put all your eggs in one basket."</p></div>
+          <div class="gterm"><h4>Dividend</h4><p>A portion of company profits paid to shareholders, usually quarterly. Yield = Annual dividend ÷ Share price. Dividend stocks are popular for income-focused investors.</p></div>
+          <div class="gterm"><h4>Drawdown</h4><p>The peak-to-trough decline in portfolio value. A 20% drawdown requires a 25% gain to recover. Maximum drawdown measures the worst decline over an investment period.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="E">
+        <div class="glossary-letter">E</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>EPS (Earnings Per Share)</h4><p>Net income ÷ total shares outstanding. The headline number in earnings reports. "Beat" = actual EPS &gt; analyst estimate. Key driver of short-term stock reactions.</p></div>
+          <div class="gterm"><h4>ETF (Exchange-Traded Fund)</h4><p>A basket of securities that trades on an exchange like a stock. Offers diversification, low cost, and tax efficiency. Can track indices, sectors, commodities, or other strategies.</p></div>
+          <div class="gterm"><h4>Expense Ratio</h4><p>Annual fee charged by an ETF or mutual fund, expressed as % of assets. Index ETFs: 0.03–0.20%. Active mutual funds: 0.5–2%+. Lower is always better for long-term compounding.</p></div>
+          <div class="gterm"><h4>Ex-Dividend Date</h4><p>You must own the stock BEFORE this date to receive the upcoming dividend. The stock price typically drops by approximately the dividend amount on the ex-dividend date.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="F">
+        <div class="glossary-letter">F</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Float</h4><p>Number of shares available for public trading. Low float stocks are highly volatile — a small amount of buying can cause large price moves. Used to identify short squeeze candidates.</p></div>
+          <div class="gterm"><h4>FOMC</h4><p>Federal Open Market Committee. Sets the federal funds rate 8 times per year. Their decisions affect all financial markets globally — stocks, bonds, currencies, and commodities.</p></div>
+          <div class="gterm"><h4>Futures Contract</h4><p>A binding agreement to buy/sell an asset at a set price on a future date. Used by traders for speculation and by producers for hedging. Requires margin (collateral).</p></div>
+          <div class="gterm"><h4>Free Cash Flow (FCF)</h4><p>Operating cash flow minus capital expenditures. The real cash a business generates after maintaining its operations. Often considered more reliable than EPS for valuation.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="G">
+        <div class="glossary-letter">G</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Golden Cross</h4><p>When the 50-day SMA crosses above the 200-day SMA. Considered a bullish long-term signal. Often followed by continued upside — though it is a lagging indicator.</p></div>
+          <div class="gterm"><h4>Greeks (Options)</h4><p>Measures of how options prices respond to various factors: Delta (price change), Theta (time decay), Vega (volatility), Gamma (rate of delta change), Rho (interest rate sensitivity).</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="H">
+        <div class="glossary-letter">H</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Hedge</h4><p>A position taken to offset risk in another position. Buying puts to protect a long stock position is a classic hedge. Reduces both risk and potential return.</p></div>
+          <div class="gterm"><h4>Head and Shoulders</h4><p>Bearish reversal chart pattern. Three peaks — middle (head) is highest, flanked by two lower peaks (shoulders). Break below the neckline confirms the pattern. Target = neckline minus head height.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="I">
+        <div class="glossary-letter">I</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Implied Volatility (IV)</h4><p>The market's expectation of future price volatility, derived from options prices. High IV = expensive options. IV crushes after earnings — options buyers often lose even when directionally correct.</p></div>
+          <div class="gterm"><h4>IPO (Initial Public Offering)</h4><p>The first time a company sells shares to the public. The company raises capital in the primary market. Post-IPO shares trade in the secondary market between investors.</p></div>
+          <div class="gterm"><h4>Index</h4><p>A benchmark tracking a group of securities. S&amp;P 500 tracks 500 large US companies. Indices are not directly investable — you invest via index funds or ETFs that replicate them.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="L">
+        <div class="glossary-letter">L</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Leverage</h4><p>Using borrowed capital to amplify returns. 2:1 leverage = $10K controls $20K. Gains and losses are amplified equally. Margin calls can force liquidation at the worst time.</p></div>
+          <div class="gterm"><h4>Limit Order</h4><p>An order to buy or sell at a specified price or better. Not guaranteed to fill (if price never reaches your limit), but guarantees execution price. Preferred over market orders in most cases.</p></div>
+          <div class="gterm"><h4>Liquidity</h4><p>How easily an asset can be bought or sold without significantly affecting its price. Highly liquid: SPY (millions of shares daily). Illiquid: penny stocks (thousands of shares, wide spreads).</p></div>
+          <div class="gterm"><h4>Long Position</h4><p>Buying an asset with the expectation that it will increase in value. Standard investing approach. Maximum loss = 100% of investment (stock can only go to zero).</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="M">
+        <div class="glossary-letter">M</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>MACD</h4><p>Moving Average Convergence Divergence. Trend-following momentum indicator. MACD line = 12 EMA − 26 EMA. Signal line = 9 EMA of MACD. Histogram = difference between the two.</p></div>
+          <div class="gterm"><h4>Margin</h4><p>Borrowed funds from a broker to increase buying power. Margin accounts require posting collateral. If account falls below maintenance margin, a margin call forces you to add funds or face liquidation.</p></div>
+          <div class="gterm"><h4>Market Cap</h4><p>Total market value of a company = Share Price × Shares Outstanding. Used to classify size: mega (&gt;$200B), large ($10–200B), mid ($2–10B), small ($300M–2B), micro (&lt;$300M).</p></div>
+          <div class="gterm"><h4>Market Order</h4><p>An order to buy or sell immediately at the best available price. Guarantees execution but not price. Avoid in volatile conditions or with illiquid assets.</p></div>
+          <div class="gterm"><h4>Moving Average (MA)</h4><p>Average of closing prices over N periods. Smooths price data to show trend direction. SMA = simple average; EMA = exponentially weighted (recent prices matter more).</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="O">
+        <div class="glossary-letter">O</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Options Contract</h4><p>Derivative giving the right (not obligation) to buy (call) or sell (put) 100 shares at a specific price before expiration. Buyers pay a premium; sellers collect premium and take on obligation.</p></div>
+          <div class="gterm"><h4>Overbought</h4><p>A condition where an asset has risen rapidly and may be due for a pullback. Typically indicated by RSI &gt;70 or price far above moving averages. Does not mean "sell immediately" — can stay overbought in strong trends.</p></div>
+          <div class="gterm"><h4>Oversold</h4><p>Condition where an asset has fallen rapidly and may be due for a bounce. RSI &lt;30. Can stay oversold in severe downtrends. Look for reversal signals (candlestick patterns, divergence) before buying.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="P">
+        <div class="glossary-letter">P</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>P/E Ratio</h4><p>Price-to-Earnings ratio = Share Price ÷ EPS. How much investors pay per $1 of earnings. S&amp;P 500 average ~20–25x. High P/E can indicate growth expectations or overvaluation.</p></div>
+          <div class="gterm"><h4>Paper Trading</h4><p>Simulated trading using virtual money to practice strategies without real risk. Most brokerages offer paper trading accounts. Recommended before trading with real capital.</p></div>
+          <div class="gterm"><h4>Pip</h4><p>Smallest standard price move in forex. For most pairs: 0.0001. EUR/USD moving from 1.0842 to 1.0843 = 1 pip. For USD/JPY: 0.01. Profits/losses are measured in pips × lot size.</p></div>
+          <div class="gterm"><h4>Position Sizing</h4><p>Determining how many shares or contracts to buy based on account risk. Formula: Risk ÷ Stop Distance = Shares. Critical for survival — limits losses on any single trade.</p></div>
+          <div class="gterm"><h4>Put Option</h4><p>Gives the right to sell 100 shares at the strike price before expiration. Profitable when the underlying stock falls below strike minus premium. Used for speculation or portfolio hedging.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="R">
+        <div class="glossary-letter">R</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Resistance</h4><p>A price level where selling pressure has historically halted upward moves. Think of it as a ceiling. When price breaks above resistance convincingly, it often becomes support.</p></div>
+          <div class="gterm"><h4>Risk/Reward Ratio</h4><p>Compares potential loss vs potential gain. 1:3 = risking $1 to make $3. With a 1:2 R:R, you can be profitable with only a 34% win rate. Never take trades with less than 1:2 R:R.</p></div>
+          <div class="gterm"><h4>RSI (Relative Strength Index)</h4><p>Momentum oscillator (0–100). Above 70 = overbought; below 30 = oversold. Most powerful when used to identify divergence between price and momentum. Default period: 14.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="S">
+        <div class="glossary-letter">S</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Short Selling</h4><p>Borrowing shares, selling them, then buying them back later at (hopefully) a lower price. Profits from falling prices. Unlimited loss potential — a stock can rise indefinitely.</p></div>
+          <div class="gterm"><h4>Short Squeeze</h4><p>When heavily shorted stock rises rapidly, forcing short sellers to buy back shares to limit losses. This buying accelerates the rise. GameStop (GME) rose 1,700% in a short squeeze in 2021.</p></div>
+          <div class="gterm"><h4>Spread (Bid-Ask)</h4><p>Difference between the bid (buy) price and the ask (sell) price. Represents an immediate cost when entering a trade. Tighter spreads = lower trading costs. Widens in illiquid or volatile conditions.</p></div>
+          <div class="gterm"><h4>Stop-Loss Order</h4><p>An order that automatically sells a position if price reaches a specified level. The primary tool for limiting losses. Never move a stop further away — this converts small losses into catastrophic ones.</p></div>
+          <div class="gterm"><h4>Support</h4><p>A price level where buying demand has historically prevented further price declines. Think of it as a floor. When support is broken, it often becomes resistance (role reversal).</p></div>
+          <div class="gterm"><h4>Swing Trading</h4><p>Holding positions for days to weeks to capture price "swings" within a trend. Less stressful than day trading. Requires managing overnight and weekend risk. Popular with part-time traders.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="T">
+        <div class="glossary-letter">T</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Technical Analysis (TA)</h4><p>Analysis of price charts, volume, and indicators to forecast future price movements. Operates on the premise that all known information is reflected in the price. Focuses on "what" not "why."</p></div>
+          <div class="gterm"><h4>Theta</h4><p>Options Greek measuring time decay — how much value an option loses per day as expiration approaches. Sellers collect theta; buyers pay it. Theta accelerates in the final 30 days before expiration.</p></div>
+          <div class="gterm"><h4>Ticker Symbol</h4><p>Short alphabetical code identifying a publicly traded security. AAPL = Apple, MSFT = Microsoft, SPY = S&P 500 ETF. Used to look up and trade securities on exchanges.</p></div>
+          <div class="gterm"><h4>Trailing Stop</h4><p>A stop loss that moves with price in your favor. If stock rises $5 with a $2 trailing stop, the stop follows up, locking in gains. Stops following price down — locks in more gains as stock rises.</p></div>
+          <div class="gterm"><h4>Trend Line</h4><p>A diagonal line connecting successive highs (downtrend line) or successive lows (uptrend line). Break above a downtrend line = potential reversal. Break below uptrend line = potential breakdown.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="V">
+        <div class="glossary-letter">V</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>VIX</h4><p>CBOE Volatility Index — the "Fear Index." Measures expected 30-day volatility of S&P 500. VIX &gt;30 = high fear; 20–30 = elevated uncertainty; &lt;15 = complacency. Spikes during market selloffs.</p></div>
+          <div class="gterm"><h4>Volume</h4><p>Total number of shares traded in a given period. High volume confirms price moves. Low volume on breakouts suggests false moves. Compare to 30-day average to judge significance.</p></div>
+          <div class="gterm"><h4>Volatility</h4><p>How much and how quickly prices change. Measured by standard deviation of returns. High volatility = wider daily ranges, larger moves. Both opportunity and risk for traders.</p></div>
+          <div class="gterm"><h4>VWAP (Volume-Weighted Average Price)</h4><p>Average price adjusted for volume throughout the day. Institutional traders use it as a benchmark. Day traders use it as intraday support/resistance. Resets at market open each day.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="W">
+        <div class="glossary-letter">W</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Watchlist</h4><p>A curated list of assets you actively monitor for potential trade setups. Should be manageable (20–40 symbols), regularly reviewed, and organized by category or setup type.</p></div>
+          <div class="gterm"><h4>Whipsaw</h4><p>A rapid price reversal that triggers stop losses and then immediately moves back in the original direction. Common in volatile, choppy conditions. Use wider stops or avoid trading during news events.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-letter-group" data-letter="Y">
+        <div class="glossary-letter">Y</div>
+        <div class="glossary-terms">
+          <div class="gterm"><h4>Yield</h4><p>The income return on an investment. Bond yield = annual coupon ÷ current price. Dividend yield = annual dividend ÷ share price. Yield and price are inversely related for bonds.</p></div>
+          <div class="gterm"><h4>Yield Curve</h4><p>A graph of Treasury yields across different maturities. Normal (upward sloping) = short rates &lt; long rates. Inverted (downward sloping) = short rates &gt; long rates. Inverted yield curve has preceded every US recession since 1950.</p></div>
+        </div>
+      </div>
+
+    </div><!-- /section-glossary -->
+
+    <!-- ═══════════════════════════════════════
+         PAPER TRADING
+    ═══════════════════════════════════════ -->
+    <div id="section-paper" class="section">
+      <div class="pt-nav-bar" id="pt-nav"></div>
+      <div id="pt-content" class="pt-content"></div>
+    </div><!-- /section-paper -->
+
+  </div><!-- /content-area -->
+
+  <footer class="page-footer">
+    <strong>TradeBase — Beginner Trading Terminal</strong><br/>
+    This platform is for educational and informational purposes only. Nothing on this site constitutes financial advice, investment advice, or a recommendation to buy or sell any security.<br/>
+    All market data is provided for educational reference only. Prices may be delayed or illustrative. Always use a licensed brokerage for actual trades.<br/>
+    <span style="color:var(--muted2);font-size:11px;margin-top:8px;display:block">Market data widgets powered by TradingView · Built with HTML, CSS &amp; JavaScript</span>
+  </footer>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script src="js/app.js"></script>
+<script src="js/paper-trading.js"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>
