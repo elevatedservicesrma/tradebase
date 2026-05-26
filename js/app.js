@@ -74,6 +74,7 @@ const SECTION_META = {
   research:   ['Research Tools',   'How to analyze trades & build watchlists'],
   glossary:   ['Glossary',         'Every trading term explained'],
   paper:      ['Paper Trading',    'Simulated brokerage experience'],
+  bot:        ['Trading Bot',      'Live AI bot dashboard — BTC/USDT paper trading'],
 };
 
 function showSection(id) {
@@ -487,7 +488,7 @@ function showShortcutHints() {
 function setupKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    const sectionMap = { '1':'dashboard', '2':'markets', '3':'education', '4':'research', '5':'glossary', '6':'paper' };
+    const sectionMap = { '1':'dashboard', '2':'markets', '3':'education', '4':'research', '5':'glossary', '6':'paper', '7':'bot' };
     if (sectionMap[e.key]) {
       e.preventDefault();
       showSection(sectionMap[e.key]);

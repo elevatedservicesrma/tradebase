@@ -94,6 +94,11 @@
     <div class="nav-item" data-section="paper" onclick="showSection('paper')">
       <span class="nav-icon"><i data-lucide="line-chart" class="icon"></i></span>Paper Trading<span class="nav-badge" style="background:var(--green-dim);color:var(--green);">NEW</span>
     </div>
+    <div class="nav-divider"></div>
+    <div class="nav-label">AUTOMATE</div>
+    <div class="nav-item" data-section="bot" onclick="showSection('bot');BotDashboard.init()">
+      <span class="nav-icon"><i data-lucide="bot" class="icon"></i></span>Trading Bot<span class="nav-badge" id="bot-nav-badge" style="background:var(--green-dim);color:var(--green);">LIVE</span>
+    </div>
   </div>
   <div class="sidebar-bottom">
     <div class="market-status">
@@ -1673,6 +1678,42 @@
       <div id="pt-content" class="pt-content"></div>
     </div><!-- /section-paper -->
 
+    <!-- ═══════════════════════════════════════
+         TRADING BOT
+    ═══════════════════════════════════════ -->
+    <div id="section-bot" class="section">
+      <div class="section-intro">
+        <div class="eyebrow">Live · Paper Trading Mode</div>
+        <h2>AI Trading Bot</h2>
+        <p>Real-time dashboard for the local BTC/USDT trading bot. Requires the API server running on your machine.</p>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="bot-status-bar">
+        <div class="bot-status-left">
+          <div class="bot-dot bot-dot-offline" id="bot-status-dot"></div>
+          <span id="bot-status-text" style="font-weight:600;color:var(--muted)">Connecting...</span>
+          <span id="bot-status-ts" style="color:var(--muted);font-size:12px;margin-left:12px"></span>
+        </div>
+        <div class="bot-status-right">
+          <button class="btn-sm" onclick="BotDashboard.load()">
+            <i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh
+          </button>
+          <span style="font-size:11px;color:var(--muted);margin-left:12px">Auto-refreshes every 30s</span>
+        </div>
+      </div>
+
+      <!-- How to start (shown always at top for quick reference) -->
+      <div class="bot-setup-hint">
+        <i data-lucide="terminal" class="icon icon-sm"></i>
+        <span>Start the API server: <code>python main.py bot-server</code> &nbsp;·&nbsp; Keep the watch loop running: <code>python main.py watch</code></span>
+      </div>
+
+      <!-- Dynamic content rendered by bot.js -->
+      <div id="bot-dashboard-body"></div>
+
+    </div><!-- /bot -->
+
   </div><!-- /content-area -->
 
   <footer class="page-footer">
@@ -1687,6 +1728,7 @@
 
 <script src="js/app.js"></script>
 <script src="js/paper-trading.js"></script>
+<script src="js/bot.js"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

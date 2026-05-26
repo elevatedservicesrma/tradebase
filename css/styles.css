@@ -1888,3 +1888,187 @@ select.pt-input { cursor: pointer; }
   .pt-nav-bar { gap: 2px; }
   .pt-tab { padding: 6px 10px; font-size: 12px; }
 }
+
+/* ─────────────────────────────────────────
+   TRADING BOT DASHBOARD
+───────────────────────────────────────── */
+
+/* Status bar */
+.bot-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.bot-status-left { display: flex; align-items: center; gap: 10px; }
+.bot-status-right { display: flex; align-items: center; }
+.bot-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.bot-dot-online  { background: var(--green); box-shadow: 0 0 6px var(--green); animation: bot-pulse 2s infinite; }
+.bot-dot-offline { background: var(--muted); }
+@keyframes bot-pulse {
+  0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+}
+
+/* Setup hint */
+.bot-setup-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(59,130,246,.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.bot-setup-hint code {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  color: var(--accent-lit);
+  font-size: 11px;
+}
+
+/* System banner */
+.bot-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.bot-banner-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.bot-banner-sub {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* Offline card */
+.bot-offline-card {
+  text-align: center;
+  padding: 60px 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+}
+.bot-offline-icon { font-size: 40px; margin-bottom: 16px; color: var(--muted); }
+.bot-offline-card h3 { color: var(--text-primary); font-size: 18px; margin-bottom: 8px; }
+.bot-offline-card p  { font-size: 13px; margin-bottom: 16px; }
+.bot-offline-sub     { font-size: 12px; color: var(--muted2); margin-top: 12px !important; }
+.bot-code-block {
+  display: inline-block;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 14px;
+  color: var(--green);
+  margin: 8px 0;
+}
+
+/* Circuit breaker grid */
+.bot-breaker-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 8px;
+}
+.bot-breaker-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 100px 110px;
+  align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border2);
+  font-size: 13px;
+  gap: 12px;
+}
+.bot-breaker-row:last-child { border-bottom: none; }
+.bot-breaker-name   { font-weight: 500; color: var(--text-secondary); }
+.bot-breaker-val    { font-size: 12px; }
+.bot-breaker-limit  { font-size: 12px; }
+.bot-breaker-status { font-size: 12px; font-weight: 600; text-align: right; }
+
+/* Tables */
+.bot-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.bot-table th {
+  text-align: left;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.bot-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border2);
+  white-space: nowrap;
+}
+.bot-table tr:last-child td { border-bottom: none; }
+.bot-table tr:hover td { background: var(--surface2); }
+
+/* Exit reason badges */
+.bot-reason-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.bot-reason-stop_loss    { background: var(--red-dim);    color: var(--red);    }
+.bot-reason-take_profit  { background: var(--green-dim);  color: var(--green);  }
+.bot-reason-manual       { background: var(--accent-dim); color: var(--accent); }
+.bot-reason-counter_signal { background: var(--yellow-dim); color: var(--yellow); }
+
+/* Small button */
+.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  font-family: inherit;
+}
+.btn-sm:hover { background: var(--surface3); border-color: var(--accent); color: var(--text-primary); }
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .bot-breaker-row { grid-template-columns: 1fr 1fr; }
+  .bot-breaker-val, .bot-breaker-limit { display: none; }
+  .bot-banner-sub { display: none; }
+}
